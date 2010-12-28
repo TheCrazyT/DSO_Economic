@@ -45,7 +45,10 @@ namespace DSO_Economic
         static extern bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
 
         [DllImport("Kernel32.dll")]
-        public static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+        static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+
+        [DllImport("Kernel32.dll")]
+        static extern uint GetLastError();
 
 
         public DSOEForm()
@@ -66,7 +69,6 @@ namespace DSO_Economic
             if (size > maxmemsize)
                 return;
 
-            if (size == 0) return;
             UInt32 br = 0;
             uint i = 0;
             uint v;
@@ -77,33 +79,47 @@ namespace DSO_Economic
 
             byte[] mem = new byte[size];
             if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
-                return;
+            {
+                if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
+                    size = br;
+                else
+                {
+                    Debug.Print("Last error:{0:x}", GetLastError());
+                    return;
+                }
+            }
+            if (size == 0) return;
+
 
             for (i = 0; i < size - 0x28; i += 4)
             {
                 do
                 {
+                    
                     uint y = getDword(mem, i);
 
                     if (y == 2)
                     {
-                        v = getDword(mem, i + 0x04);
+
+                        v = getDword(mem, i+0x04);
 
                         if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5)) break;
 
 
-                        w = getDword(mem, i + 0x08);
+                        w = getDword(mem, i+0x08);
                         if (w > 5000) break;
 
-                        v = getDword(mem, i + 0x14);
+                        v = getDword(mem, i+0x14);
                         if (((v == 5) || (v == 25)) && (!trees)) break;
 
                         if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
                             if (v == w) break;
 
-                        v = getDword(mem, i + 0x28);
+                        v = getDword(mem, i+0x28);
                         if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                             break;
+                        //TODO: muss eigendlich zum Anfang hin
+
                         resourceEntries.Add(new ResourceEntry(start + i));
                         Debug.Print("Step2 ...");
                     }
@@ -118,8 +134,6 @@ namespace DSO_Economic
             Application.DoEvents();
             if (size > maxmemsize) return 0;
 
-            if (size == 0) return 0;
-
             UInt32 br = 0;
             uint i = 0;
             uint starti = 0;
@@ -131,13 +145,31 @@ namespace DSO_Economic
 
             byte[] mem = new byte[size];
             if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
-                return 0;
+                if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
+                    //size = br;
+                    return 0;
+                else
+                {
+                    Debug.Print("Last error:{0:x}", GetLastError());
+                    return 0;
+                }
 
-            for (i = 0; i < size - 8; i++)
+            if (size == 0) return 0;
+
+            for (i = 0; i < size - 0x20; i++)
             {
+                //if (i + start > 0x12eaf000) Debugger.Break();
+
                 starti = i;
-                v = getDword(mem, i);
-                w = getDword(mem, i + 4);
+
+                w = getDword(mem, i);
+                if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize))) continue;
+
+                w = getDword(mem, i + 0x04);
+                if (((w & 0xFF) != 2) && ((w & 0xFF) != 3)) continue;
+
+                v = getDword(mem, i + 0x10);
+                w = getDword(mem, i + 0x14);
 
                 if (v == 0) continue;
                 if (v > maxstorage) continue;
@@ -148,56 +180,64 @@ namespace DSO_Economic
 
                 for (uint rounds = 0; rounds < maxmatch1rounds; rounds++)
                 {
-                    if (i >= size - 4 - 24 * 4 - 16)
+                    if (i >= size - 4 - 0x20 - 16)
                     {
                         correct = false;
                         break;
                     }
 
-                    w = getDword(mem, i + 24 * 4);
-                    if (w != v)
-                    {
-                        correct = false;
-                        break;
-                    }
-
-                    w = getDword(mem, i + 24 * 4 + 4);
-                    if (w > v)
-                    {
-                        correct = false;
-                        break;
-                    }
-
-                    w = getDword(mem, i + 24 * 4 + 16);
+                    w = getDword(mem, i + 0x20 );
                     if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                     {
                         correct = false;
                         break;
                     }
 
-                    i += 24 * 4;
+                    w = getDword(mem, i + 0x20 + 0x04);
+                    if (((w&0xFF) != 2)&&((w&0xFF) != 3))
+                    {
+                        correct = false;
+                        break;
+                    }
+
+                    w = getDword(mem, i + 0x20 + 0x10);
+                    if (w != v)
+                    {
+                        correct = false;
+                        break;
+                    }
+
+                    w = getDword(mem, i + 0x20 + 0x14);
+                    if (w > v)
+                    {
+                        correct = false;
+                        break;
+                    }
+
+
+                    i += 0x20;
 
                 }
                 if (correct)
                 {
-                    uint searchstart = starti - 4;
+                    uint searchstart = starti + 0x0C;
                     uint vartype = getDword(mem, searchstart);
-                    for (searchstart = starti - 4; (searchstart > 0) && (searchstart < size - 8); searchstart -= 8 * 4)
+                    for (searchstart = starti + 0x0C; (searchstart > 0) && (searchstart < size - 8); searchstart -= 8 * 4)
                     {
                         if (getDword(mem, searchstart) == vartype)
                             if (getDword(mem, searchstart + 4) == max)
-                                starti = searchstart + 4;
+                                starti = searchstart - 0x0C;
                     }
 
-                    long pos = start + starti - 4;
+                    long pos = start + starti;
                     for (int j = 0; j < 40; j++)
                     {
-                        ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 12, ref br);
+                        if (!ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br)) return 0;
                         uint x = 0;
-                        while (getDword(mem, 0) != vartype)
+                        while (getDword(mem, 0x0C) != vartype)
                         {
                             pos += 8 * 4;
-                            ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 12, ref br);
+                            if (!ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br)) return 0;
                             if (x++ > 100000) { return 0; }
                         }
                         pos += 8 * 4;
@@ -214,9 +254,9 @@ namespace DSO_Economic
         private void refreshItemList()
         {
             UInt32 br = 0;
-            byte[] mem = new byte[12];
-            if (!ReadProcessMemory(Main.Handle, (IntPtr)(offset - 4), mem, 4, ref br)) return;
-            vartype = getDword(mem, 0);
+            byte[] mem = new byte[0x20];
+            if (!ReadProcessMemory(Main.Handle, (IntPtr)(offset), mem, 0x20, ref br)) return;
+            vartype = getDword(mem, 0x0C);
 
             int idx = items.SelectedIndex;
             items.BindingContext[itemEntries].SuspendBinding();
@@ -464,9 +504,9 @@ namespace DSO_Economic
                 Debug.Print("Memory part offset: {0:x}", memstart);
                 Debug.Print("Start offset relative to memory part offset: {0:x}", offset - memstart);
                 UInt32 br = 0;
-                byte[] mem = new byte[12];
-                ReadProcessMemory(Main.Handle, (IntPtr)(offset - 4), mem, 4, ref br);
-                vartype = getDword(mem, 0);
+                byte[] mem = new byte[0x20];
+                ReadProcessMemory(Main.Handle, (IntPtr)(offset ), mem, 0x20, ref br);
+                vartype = getDword(mem, 0x0C);
 
 
                 uint i = 0;
@@ -535,10 +575,10 @@ namespace DSO_Economic
                 get
                 {
                     if (memoffset == 0) return 0;
-                    byte[] mem = new byte[12];
+                    byte[] mem = new byte[0x20];
                     UInt32 br = 0;
-                    ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 12, ref br);
-                    return getDword(mem, 8); ;
+                    ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
+                    return getDword(mem, 0x14);
                 }
             }
 
@@ -557,23 +597,23 @@ namespace DSO_Economic
                 _Name = Name;
 
                 UInt32 br = 0;
-                byte[] mem = new byte[12];
+                byte[] mem = new byte[0x20];
                 if ((Main != null) && (offset != 0))
                 {
-                    long pos = offset - 4;
+                    long pos = offset;
                     for (int i = 0; i < 40; )
                     {
-                        ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 12, ref br);
+                        ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br);
                         uint x = 0;
-                        while (getDword(mem, 0) != vartype)
+                        while (getDword(mem, 0x0C) != vartype)
                         {
                             pos += 8 * 4;
-                            ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 12, ref br);
+                            ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br);
                             if (x++ > 100000) { Debug.Print("Limit reached, setting memoffset=0 for ID:{0}", ID); memoffset = 0; return; }
                         }
 
-                        if (getDword(mem, 4) == max)
-                            if (getDword(mem, 0) == vartype)
+                        if (getDword(mem, 0x10) == max)
+                            if (getDword(mem, 0xC) == vartype)
                                 if (i == ID)
                                 {
                                     memoffset = pos;
@@ -607,12 +647,12 @@ namespace DSO_Economic
                 get
                 {
                     UInt32 br = 0;
-                    byte[] mem = new byte[12];
+                    byte[] mem = new byte[0x20];
                     if ((Main != null) && (memoffset != 0))
                     {
-                        ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 12, ref br);
+                        ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
 
-                        if (getDword(mem, 0) == vartype)
+                        if (getDword(mem, 0xc) == vartype)
                         {
                             return _Name + ": " + amount;
                         }
