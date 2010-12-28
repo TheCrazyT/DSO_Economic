@@ -35,7 +35,6 @@ namespace DSO_Economic
         private static uint maxmemsize = 0x300000;
         private static uint maxsearchoffset = 0x1E0000;
         private static uint maxstorage = 6000;
-        private static uint rcount = 60;
         private static uint maxmatch1rounds = 10;
 
 
@@ -354,22 +353,6 @@ namespace DSO_Economic
                     }
                 }
                 if (arg == "/notrees") trees = false;
-                if (arg == "/rcount")
-                {
-                    if (args.Length > h + 1)
-                    {
-                        try
-                        {
-                            rcount = uint.Parse(args[h + 1]);
-                        }
-                        catch (Exception e2)
-                        {
-                            MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            Application.Exit();
-                            this.Dispose();
-                        }
-                    }
-                }
                 h++;
             }
             #endregion
