@@ -18,7 +18,6 @@ namespace DSO_Economic
     {
         private static ProcessModule npswf = null;
         private static Process Main = null;
-        private static long offset = 0;
         private static long max;
         private static uint vartype;
         private static uint lastresourceEntriesID = 0;
@@ -123,10 +122,12 @@ namespace DSO_Economic
             return;
         }
 
-        private long findItems(IntPtr handle, uint start, uint size)
+
+
+        private void findItems(IntPtr handle, uint start, uint size)
         {
             Application.DoEvents();
-            if (size > maxmemsize) return 0;
+            if (size > maxmemsize) return;
 
             UInt32 br = 0;
             uint i = 0;
@@ -138,31 +139,34 @@ namespace DSO_Economic
                 size = maxsearchoffset;
 
             byte[] mem = new byte[size];
+            byte[] mem2 = new byte[0x14];
             if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
                 if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
-                    //size = br;
-                    return 0;
+                    size = br;
                 else
                 {
                     Debug.Print("Last error:{0:x}", GetLastError());
-                    return 0;
+                    return;
                 }
 
-            if (size == 0) return 0;
+            if (size == 0) return;
 
             for (i = 0; i < size - 0x20; i++)
             {
-                //if (i + start > 0x12eaf000) Debugger.Break();
-
+                
                 starti = i;
 
                 w = getDword(mem, i);
                 if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize))) continue;
 
                 w = getDword(mem, i + 0x04);
-                if (((w & 0xFF) != 2) && ((w & 0xFF) != 3)) continue;
+                if ((w & 0xFF) != 3) continue;
+
+                vartype = getDword(mem, i + 0x0C);
+                if (vartype == 0) continue;
 
                 v = getDword(mem, i + 0x10);
+
                 w = getDword(mem, i + 0x14);
 
                 if (v == 0) continue;
@@ -170,87 +174,28 @@ namespace DSO_Economic
                 if (v % 100 != 0) continue;
                 if (w > v) continue;
                 max = v;
-                bool correct = true;
 
-                for (uint rounds = 0; rounds < maxmatch1rounds; rounds++)
-                {
-                    if (i >= size - 4 - 0x20 - 16)
-                    {
-                        correct = false;
-                        break;
-                    }
+                if (max == 100) continue;
 
-                    w = getDword(mem, i + 0x20 );
-                    if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
-                    {
-                        correct = false;
-                        break;
-                    }
+                uint off = getDword(mem, i + 0x18);
 
-                    w = getDword(mem, i + 0x20 + 0x04);
-                    if (((w&0xFF) != 2)&&((w&0xFF) != 3))
-                    {
-                        correct = false;
-                        break;
-                    }
+                if (!ReadProcessMemory(handle, (IntPtr)off, mem2, 0x14, ref br)) continue;
+                w = getDword(mem2,  0x10);
 
-                    w = getDword(mem, i + 0x20 + 0x10);
-                    if (w != v)
-                    {
-                        correct = false;
-                        break;
-                    }
+                Debug.Print("{0:x} {1:x} {2} {3}",start+i, vartype,v,w);
 
-                    w = getDword(mem, i + 0x20 + 0x14);
-                    if (w > v)
-                    {
-                        correct = false;
-                        break;
-                    }
-
-
-                    i += 0x20;
-
-                }
-                if (correct)
-                {
-                    uint searchstart = starti + 0x0C;
-                    uint vartype = getDword(mem, searchstart);
-                    for (searchstart = starti + 0x0C; (searchstart > 0) && (searchstart < size - 8); searchstart -= 8 * 4)
-                    {
-                        if (getDword(mem, searchstart) == vartype)
-                            if (getDword(mem, searchstart + 4) == max)
-                                starti = searchstart - 0x0C;
-                    }
-
-                    long pos = start + starti;
-                    for (int j = 0; j < 40; j++)
-                    {
-                        if (!ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br)) return 0;
-                        uint x = 0;
-                        while (getDword(mem, 0x0C) != vartype)
-                        {
-                            pos += 8 * 4;
-                            if (!ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br)) return 0;
-                            if (x++ > 100000) { return 0; }
-                        }
-                        pos += 8 * 4;
-                    }
-
-                    return start + starti;
-                }
+                if(itemEntries.Count<itemnames.Count)
+                    itemEntries.Add(new ItemEntry(start + i));
             }
-            return 0;
+            return;
         }
+
+       
         #endregion
 
 
         private void refreshItemList()
         {
-            UInt32 br = 0;
-            byte[] mem = new byte[0x20];
-            if (!ReadProcessMemory(Main.Handle, (IntPtr)(offset), mem, 0x20, ref br)) return;
-            vartype = getDword(mem, 0x0C);
 
             int idx = items.SelectedIndex;
             items.BindingContext[itemEntries].SuspendBinding();
@@ -414,7 +359,13 @@ namespace DSO_Economic
             OleDbDataReader DbReader;
             DbCommand.CommandText = "SELECT Name FROM items" + tblext + " ORDER BY ID ASC";
             DbReader = DbCommand.ExecuteReader();
+
             itemnames = new List<string>();
+            while (DbReader.Read())
+            {
+                itemnames.Add(DbReader.GetString(0));
+            }
+
             itemEntries = new List<ItemEntry>();
             resourceEntries = new List<ResourceEntry>();
             string[] processes = new string[] { "plugin-container", "iexplore" }; //plugin-container für Chrome und Firefox ... IE macht wieder sein eigenes Ding
@@ -468,7 +419,7 @@ namespace DSO_Economic
 
                         Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.AllocationBase, (uint)m.AllocationBase + totalsize, totalsize);
 
-                        long tempoff;
+                        /*long tempoff;
                         if (offset == 0) //Offset für items noch nicht gefunden?
                         {
                             tempoff = findItems(p.Handle, (uint)m.AllocationBase, (uint)totalsize);
@@ -477,44 +428,25 @@ namespace DSO_Economic
                                 memstart = (uint)m.AllocationBase;
                                 offset = tempoff;
                             }
-                        }
+                        }*/
 
-
+                        findItems(p.Handle, (uint)m.AllocationBase, (uint)totalsize);
                         findResources(p.Handle, (uint)m.AllocationBase, (uint)totalsize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
 
                     } while (address <= MaxAddress);
 
-                    if (offset != 0) break;
+                    //if (offset != 0) break;
                 }
-                if ((Main != null) && (offset != 0)) break;
+                //if ((Main != null) && (offset != 0)) break;
+                if ((Main != null) && (itemEntries.Count>0)) break;
             }
             #endregion
 
-            if ((Main != null) && (offset > 0))
+            if ((Main != null) && (itemEntries.Count > 0))
             {
-
-
-                Debug.Print("Start offset: {0:x}", offset);
-                Debug.Print("Memory part offset: {0:x}", memstart);
-                Debug.Print("Start offset relative to memory part offset: {0:x}", offset - memstart);
-                UInt32 br = 0;
-                byte[] mem = new byte[0x20];
-                ReadProcessMemory(Main.Handle, (IntPtr)(offset ), mem, 0x20, ref br);
-                vartype = getDword(mem, 0x0C);
-
-
-                uint i = 0;
-                while (DbReader.Read())
-                {
-                    itemnames.Add(DbReader.GetString(0));
-                    itemEntries.Add(new ItemEntry(i++, DbReader.GetString(0), offset));
-                }
-
-
                 resources.DataSource = resourceEntries;
                 resources.DisplayMember = "Text";
                 resources.ValueMember = "ID";
-
 
                 items.DataSource = itemEntries;
                 items.DisplayMember = "Text";
@@ -531,7 +463,7 @@ namespace DSO_Economic
                 else
                     errorcode += "0";
 
-                if (offset == 0)
+                if (itemEntries.Count==0)
                     errorcode += "1";
                 else
                     errorcode += "0";
@@ -564,6 +496,7 @@ namespace DSO_Economic
         public struct ItemEntry
         {
             private uint _ID;
+            private static int last_ID = -1;
             public uint amount
             {
                 get
@@ -585,42 +518,15 @@ namespace DSO_Economic
             }
             private string _Name;
             private long memoffset;
-            public ItemEntry(uint ID, string Name, long offset)
+            public ItemEntry(long offset)
             {
-                this._ID = ID;
-                _Name = Name;
-
-                UInt32 br = 0;
-                byte[] mem = new byte[0x20];
-                if ((Main != null) && (offset != 0))
-                {
-                    long pos = offset;
-                    for (int i = 0; i < 40; )
-                    {
-                        ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br);
-                        uint x = 0;
-                        while (getDword(mem, 0x0C) != vartype)
-                        {
-                            pos += 8 * 4;
-                            ReadProcessMemory(Main.Handle, (IntPtr)(pos), mem, 0x20, ref br);
-                            if (x++ > 100000) { Debug.Print("Limit reached, setting memoffset=0 for ID:{0}", ID); memoffset = 0; return; }
-                        }
-
-                        if (getDword(mem, 0x10) == max)
-                            if (getDword(mem, 0xC) == vartype)
-                                if (i == ID)
-                                {
-                                    memoffset = pos;
-                                    return;
-                                }
-                                else
-                                    i++;
-
-                        pos += 8 * 4;
-                    }
-                }
-                Debug.Print("Setting memoffset=0 for ID:{0}", ID);
-                memoffset = 0;
+                _ID = (uint)(last_ID + 1);
+                last_ID = (int)_ID;
+                if (_ID < itemnames.Count)
+                    _Name = itemnames[(int)_ID];
+                else
+                    _Name = "";
+                memoffset = offset;
             }
             public void save()
             {
@@ -645,12 +551,7 @@ namespace DSO_Economic
                     if ((Main != null) && (memoffset != 0))
                     {
                         ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-
-                        if (getDword(mem, 0xc) == vartype)
-                        {
-                            return _Name + ": " + amount;
-                        }
-
+                        return _Name + ": " + amount;
                     }
                     Debug.Print("ID:{0} memoffset:{1:x}", ID, memoffset);
                     return "";
