@@ -13,6 +13,6 @@ Funktionen:
 <td>findResources </td> <td> Findet alle Rohstoffe und Listet sie auf</td>
 </tr>
 <tr>
-<td> findItems </td> <td>Findet alle gegenst‰nde die momentan in eurem Besitz sind</td>
+<td> findItems </td> <td>Findet alle Gegenst√§nde die momentan in eurem Besitz sind</td>
 </tr>
 </table>
