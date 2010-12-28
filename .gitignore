@@ -1,0 +1,9 @@
+ZedGraph.dll
+ZedGraph.resources.dll
+Backup
+obj
+bin
+*.user
+*.suo
+*.cache
+_*
