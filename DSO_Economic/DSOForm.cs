@@ -91,38 +91,32 @@ namespace DSO_Economic
             if (size == 0) return;
 
 
-            for (i = 0; i < size - 0x28; i += 4)
+            for (i = 0; i < size - 0x54; i += 4)
             {
                 do
                 {
-                    
-                    uint y = getDword(mem, i);
+                    v = getDword(mem, i);
+                    if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                        break;
 
-                    if (y == 2)
-                    {
+                    uint y = getDword(mem, i + 0x40);
+                    if (y != 2) break;
 
-                        v = getDword(mem, i+0x04);
+                    v = getDword(mem, i + 0x44);
+                    if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5)) break;
 
-                        if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5)) break;
 
+                    w = getDword(mem, i + 0x48);
+                    if (w > 5000) break;
 
-                        w = getDword(mem, i+0x08);
-                        if (w > 5000) break;
+                    v = getDword(mem, i + 0x54);
+                    if (((v == 5) || (v == 25)) && (!trees)) break;
 
-                        v = getDword(mem, i+0x14);
-                        if (((v == 5) || (v == 25)) && (!trees)) break;
+                    if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
+                        if (v == w) break;
 
-                        if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
-                            if (v == w) break;
-
-                        v = getDword(mem, i+0x28);
-                        if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
-                            break;
-                        //TODO: muss eigendlich zum Anfang hin
-
-                        resourceEntries.Add(new ResourceEntry(start + i));
-                        Debug.Print("Step2 ...");
-                    }
+                    resourceEntries.Add(new ResourceEntry(start + i + 0x40));
+                    Debug.Print("Step2 ...");
                 }
                 while (false);
             }
