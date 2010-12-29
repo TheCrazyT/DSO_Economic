@@ -225,6 +225,55 @@ namespace DSO_Economic
             myPane.Fill = new Fill(Color.White, Color.FromArgb(220, 220, 255), 45F);
             zgc.AxisChange();
         }
+        public void AutoFix(IntPtr handle)
+        {
+            Debug.Print("AutoFix ...");
+            MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
+            long address = 0;
+            uint MaxAddress = 0x7fffffff;
+            byte[] mem = new byte[8];
+
+            for (int y = 0; y < itemEntries.Count - 1; y++)
+            {
+                long off1 = itemEntries[y].memoffset ^ 0x01;
+                long off2 = itemEntries[y+1].memoffset ^ 0x01;
+
+                uint br = 0;
+                do
+                {
+                    bool result = VirtualQueryEx(handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
+                    if (!result) break;
+                    if (m.AllocationBase == 0)
+                    {
+                        address = (long)(m.BaseAddress + m.RegionSize);
+                        continue;
+                    }
+
+                    Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
+                    byte[] mem2 = new byte[m.RegionSize];
+                    ReadProcessMemory(handle, (IntPtr)m.BaseAddress, mem2, (uint)m.RegionSize, ref br);
+
+                    for (uint i = 0; i < m.RegionSize - 8; i += 4)
+                    {
+                        if (getDword(mem2, i) == off1)
+                            if (getDword(mem2, i + 4) == off2)
+                            {
+                                while (getDword(mem2, i) != 0)
+                                    i -= 4;
+                                i += 12;
+                                itemEntries = new List<ItemEntry>();
+                                ItemEntry.reset();
+                                for (int x = 0; x < itemnames.Count; x++)
+                                    itemEntries.Add(new ItemEntry(getDword(mem2, (uint)(i + x * 4)) & 0xFFFFFFF8));
+                                return;
+                            }
+                    }
+
+                    address = (long)(m.BaseAddress + m.RegionSize);
+
+                } while (address <= MaxAddress);
+            }
+        }
 
         private void DSOEForm_Load(object sender, EventArgs e)
         {
@@ -406,6 +455,7 @@ namespace DSO_Economic
 
                     } while (address <= MaxAddress);
 
+                    if ((Main != null) && (itemEntries.Count > 0)) break;
                 }
                 if ((Main != null) && (itemEntries.Count>0)) break;
             }
@@ -414,11 +464,7 @@ namespace DSO_Economic
             if ((Main != null) && (itemEntries.Count > 0))
             {
                 if (itemEntries.Count > itemnames.Count)
-                {
-                    FixForm ff = new FixForm();
-                    ff.ShowDialog(this);
-                    ff.Dispose();
-                }
+                    AutoFix(Main.Handle);
 
                 resources.DataSource = resourceEntries;
                 resources.DisplayMember = "Text";
@@ -501,7 +547,7 @@ namespace DSO_Economic
                 }
             }
             private string _Name;
-            private long memoffset;
+            public long memoffset;
             public ItemEntry(long offset)
             {
                 _ID = (uint)(last_ID + 1);
@@ -511,6 +557,10 @@ namespace DSO_Economic
                 else
                     _Name = "";
                 memoffset = offset;
+            }
+            public static void reset()
+            {
+                ItemEntry.last_ID = -1;
             }
             public void setID(uint ID)
             {
