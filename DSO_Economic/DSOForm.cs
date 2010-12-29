@@ -150,13 +150,13 @@ namespace DSO_Economic
                 }
 
             if (size == 0) return;
-
-            for (i = 0; i < size - 0x20; i++)
+            for (i = 0; i < size - 0x20; i+=4)
             {
                 
                 starti = i;
 
                 w = getDword(mem, i);
+
                 if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize))) continue;
 
                 w = getDword(mem, i + 0x04);
@@ -177,14 +177,8 @@ namespace DSO_Economic
 
                 if (max == 100) continue;
 
-                uint off = getDword(mem, i + 0x18);
-
-                if (!ReadProcessMemory(handle, (IntPtr)off, mem2, 0x14, ref br)) continue;
-                w = getDword(mem2,  0x10);
-
                 Debug.Print("{0:x} {1:x} {2} {3}",start+i, vartype,v,w);
 
-                /*if(itemEntries.Count<itemnames.Count)*/
                 itemEntries.Add(new ItemEntry(start + i));
             }
             return;
@@ -404,10 +398,9 @@ namespace DSO_Economic
                             continue;
                         }
 
-
                         Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
-                        findItems(p.Handle, (uint)m.AllocationBase, (uint)m.RegionSize);
-                        findResources(p.Handle, (uint)m.AllocationBase, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
+                        findItems(p.Handle, (uint)m.BaseAddress, (uint)m.RegionSize);
+                        findResources(p.Handle, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
                         
                         address = (long)(m.BaseAddress + m.RegionSize);
 
