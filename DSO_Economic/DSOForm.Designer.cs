@@ -42,7 +42,7 @@
             this.items.FormattingEnabled = true;
             this.items.Location = new System.Drawing.Point(12, 12);
             this.items.Name = "items";
-            this.items.Size = new System.Drawing.Size(105, 550);
+            this.items.Size = new System.Drawing.Size(117, 550);
             this.items.TabIndex = 0;
             this.items.SelectedValueChanged += new System.EventHandler(this.items_SelectedValueChanged);
             // 
@@ -58,7 +58,7 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.graph.IsEnableVPan = false;
             this.graph.IsEnableVZoom = false;
-            this.graph.Location = new System.Drawing.Point(225, 12);
+            this.graph.Location = new System.Drawing.Point(265, 12);
             this.graph.Name = "graph";
             this.graph.ScrollGrace = 0;
             this.graph.ScrollMaxX = 0;
@@ -67,7 +67,7 @@
             this.graph.ScrollMinX = 0;
             this.graph.ScrollMinY = 0;
             this.graph.ScrollMinY2 = 0;
-            this.graph.Size = new System.Drawing.Size(536, 550);
+            this.graph.Size = new System.Drawing.Size(496, 550);
             this.graph.TabIndex = 1;
             // 
             // resources
@@ -75,9 +75,9 @@
             this.resources.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)));
             this.resources.FormattingEnabled = true;
-            this.resources.Location = new System.Drawing.Point(114, 12);
+            this.resources.Location = new System.Drawing.Point(135, 12);
             this.resources.Name = "resources";
-            this.resources.Size = new System.Drawing.Size(105, 550);
+            this.resources.Size = new System.Drawing.Size(124, 550);
             this.resources.TabIndex = 2;
             // 
             // DSOEForm

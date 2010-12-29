@@ -23,7 +23,7 @@ namespace DSO_Economic
         private static uint lastresourceEntriesID = 0;
 
         private static List<String> itemnames;
-        private static List<ItemEntry> itemEntries;
+        public static List<ItemEntry> itemEntries;
         private static List<ResourceEntry> resourceEntries;
         private static OleDbConnection DbConnection;
 
@@ -184,8 +184,8 @@ namespace DSO_Economic
 
                 Debug.Print("{0:x} {1:x} {2} {3}",start+i, vartype,v,w);
 
-                if(itemEntries.Count<itemnames.Count)
-                    itemEntries.Add(new ItemEntry(start + i));
+                /*if(itemEntries.Count<itemnames.Count)*/
+                itemEntries.Add(new ItemEntry(start + i));
             }
             return;
         }
@@ -339,7 +339,7 @@ namespace DSO_Economic
             uint MaxAddress = 0x7fffffff;
             long address = 0;
             bool result;
-            long memstart = 0;
+            
 
             Loading LDForm = new Loading();
             LDForm.Show();
@@ -393,57 +393,40 @@ namespace DSO_Economic
 
                     if (npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
 
+                    MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
                     do
                     {
-                        MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
                         result = VirtualQueryEx(p.Handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
                         if (!result) break; //am ende angekommen ... wir können aufhören
-
-                        address = (long)(m.BaseAddress + m.RegionSize);
-                        if (m.AllocationBase == 0) continue;
-
-
-                        long address2 = address;
-                        MEMORY_BASIC_INFORMATION m2 = new MEMORY_BASIC_INFORMATION();
-                        m2 = m;
-                        uint totalsize = (uint)m.RegionSize;
-                        while (m2.AllocationBase == m.AllocationBase)
+                        if (m.AllocationBase == 0)
                         {
-                            address = address2;
-                            result = VirtualQueryEx(p.Handle, (IntPtr)address2, out m2, (uint)Marshal.SizeOf(m));
-                            totalsize += (uint)m2.RegionSize;
-                            address2 = (long)(m2.BaseAddress + m2.RegionSize);
-                            if (!result) break;
+                            address = (long)(m.BaseAddress + m.RegionSize);
+                            continue;
                         }
-                        totalsize -= (uint)m2.RegionSize; //berechne totale Segmentgröße ... ist etwas schneller gleich viel Speicher zu laden und zu überprüfen anstatt einzeln
 
-                        Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.AllocationBase, (uint)m.AllocationBase + totalsize, totalsize);
 
-                        /*long tempoff;
-                        if (offset == 0) //Offset für items noch nicht gefunden?
-                        {
-                            tempoff = findItems(p.Handle, (uint)m.AllocationBase, (uint)totalsize);
-                            if (tempoff != 0)
-                            {
-                                memstart = (uint)m.AllocationBase;
-                                offset = tempoff;
-                            }
-                        }*/
-
-                        findItems(p.Handle, (uint)m.AllocationBase, (uint)totalsize);
-                        findResources(p.Handle, (uint)m.AllocationBase, (uint)totalsize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
+                        Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
+                        findItems(p.Handle, (uint)m.AllocationBase, (uint)m.RegionSize);
+                        findResources(p.Handle, (uint)m.AllocationBase, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
+                        
+                        address = (long)(m.BaseAddress + m.RegionSize);
 
                     } while (address <= MaxAddress);
 
-                    //if (offset != 0) break;
                 }
-                //if ((Main != null) && (offset != 0)) break;
                 if ((Main != null) && (itemEntries.Count>0)) break;
             }
             #endregion
 
             if ((Main != null) && (itemEntries.Count > 0))
             {
+                if (itemEntries.Count > itemnames.Count)
+                {
+                    FixForm ff = new FixForm();
+                    ff.ShowDialog(this);
+                    ff.Dispose();
+                }
+
                 resources.DataSource = resourceEntries;
                 resources.DisplayMember = "Text";
                 resources.ValueMember = "ID";
@@ -463,12 +446,15 @@ namespace DSO_Economic
                 else
                     errorcode += "0";
 
-                if (itemEntries.Count==0)
+                if (itemEntries.Count == 0)
                     errorcode += "1";
                 else
                     errorcode += "0";
 
-                errorcode += "0"; //wurde früher mal benutzt ... nun nichtmehr
+                if (resourceEntries.Count == 0) //kein KO-Kriterium, aber dennoch hilfreich bei der Fehlersuche
+                    errorcode += "1";
+                else
+                    errorcode += "0";
 
                 if (npswf == null)
                     errorcode += "1";
@@ -493,10 +479,16 @@ namespace DSO_Economic
         }
 
 
-        public struct ItemEntry
+        public class ItemEntry
         {
             private uint _ID;
             private static int last_ID = -1;
+            public string Amount
+            {
+                get{
+                    return amount.ToString();
+                }
+            }
             public uint amount
             {
                 get
@@ -508,7 +500,6 @@ namespace DSO_Economic
                     return getDword(mem, 0x14);
                 }
             }
-
             public uint ID
             {
                 get
@@ -527,6 +518,14 @@ namespace DSO_Economic
                 else
                     _Name = "";
                 memoffset = offset;
+            }
+            public void setID(uint ID)
+            {
+                this._ID = ID;
+                if (_ID < itemnames.Count)
+                    this._Name = itemnames[(int)_ID];
+                else
+                    this._Name = "";
             }
             public void save()
             {
@@ -559,7 +558,7 @@ namespace DSO_Economic
             }
         }
 
-        public struct ResourceEntry
+        public class ResourceEntry
         {
             private long memoffset;
             public long amount;
