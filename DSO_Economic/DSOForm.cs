@@ -264,7 +264,11 @@ namespace DSO_Economic
                                 itemEntries = new List<ItemEntry>();
                                 ItemEntry.reset();
                                 for (int x = 0; x < itemnames.Count; x++)
-                                    itemEntries.Add(new ItemEntry(getDword(mem2, (uint)(i + x * 4)) & 0xFFFFFFF8));
+                                {
+                                    ItemEntry ie = new ItemEntry(getDword(mem2, (uint)(i + x * 4)) & 0xFFFFFFF8);
+                                    if (x == 0) max = ie.max;
+                                    itemEntries.Add(ie);
+                                }
                                 return;
                             }
                     }
@@ -408,6 +412,7 @@ namespace DSO_Economic
             {
                 itemnames.Add(DbReader.GetString(0));
             }
+            DbReader.Close();
 
             itemEntries = new List<ItemEntry>();
             resourceEntries = new List<ResourceEntry>();
@@ -537,6 +542,17 @@ namespace DSO_Economic
                     UInt32 br = 0;
                     ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
                     return getDword(mem, 0x14);
+                }
+            }
+            public uint max
+            {
+                get
+                {
+                    if (memoffset == 0) return 0;
+                    byte[] mem = new byte[0x20];
+                    UInt32 br = 0;
+                    ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
+                    return getDword(mem, 0x10);
                 }
             }
             public uint ID
@@ -703,8 +719,115 @@ namespace DSO_Economic
                 double diff = new XDate(DbReader.GetDateTime(0));
                 list.Add(diff, DbReader.GetInt32(1));
             }
+            DbReader.Close();
             CreateGraph(graph, itemnames[items.SelectedIndex], list);
             graph.Refresh();
+        }
+        private string getTimeLeftEmpty(uint ID)
+        {
+            //TODO: genauere Berechnung mittels Korrelationsgerade
+
+            OleDbCommand DbCommand = DbConnection.CreateCommand();
+            DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
+            OleDbDataReader DbReader = DbCommand.ExecuteReader();
+
+            if (DbReader.Read())
+            {
+                long amt = DbReader.GetInt32(1);
+                long amt2 = itemEntries[(int)ID].amount;
+                if (amt >= amt2)
+                {
+                    DbReader.Close();
+                    return "-";
+                }
+                else
+                {
+                    TimeSpan t = DateTime.Now-DbReader.GetDateTime(0);
+                    DbReader.Close();
+                    
+                    double ms=(amt2/((amt2-amt)/t.TotalMilliseconds));
+                    int h=(int)(ms/1000/60/60);
+                    int min=(int)((ms-h*60*60*1000)/1000/60);
+                    int s=(int)((ms-h*60*60*1000+min*60*1000)/1000);
+                    
+                    TimeSpan t2=new TimeSpan(h,min,s);
+                    return t2.ToString();
+                }
+            }
+            DbReader.Close();
+
+            return "-";
+        }
+        private string getTimeLeftFull(uint ID)
+        {
+            //TODO: genauere Berechnung mittels Korrelationsgerade
+
+            OleDbCommand DbCommand = DbConnection.CreateCommand();
+            DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
+            OleDbDataReader DbReader = DbCommand.ExecuteReader();
+
+            if (DbReader.Read())
+            {
+                long amt = DbReader.GetInt32(1);
+                long amt2 = itemEntries[(int)ID].amount;
+                if (amt <= amt2)
+                {
+                    DbReader.Close();
+                    return "-";
+                }
+                else
+                {
+                    TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
+                    DbReader.Close();
+
+                    double ms = ((max-amt2) / ((amt - amt2) / t.TotalMilliseconds));
+                    int h = (int)(ms / 1000 / 60 / 60);
+                    int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
+                    int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
+
+                    TimeSpan t2 = new TimeSpan(h, min, s);
+                    return t2.ToString();
+                }
+            }
+            DbReader.Close();
+
+            return "-";
+        }
+        private void TimeLeft_Tick(object sender, EventArgs e)
+        {
+            uint i=0;
+            foreach (ListViewItem liv in itemsOverview.Items)
+            {
+                liv.SubItems[1].Text = getTimeLeftEmpty(i);
+                liv.SubItems[2].Text = getTimeLeftFull(i++);
+            }
+        }
+
+        private void tabCtrl_TabIndexChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void tabCtrl_Selected(object sender, TabControlEventArgs e)
+        {
+            if (tabCtrl.SelectedTab == tabCtrl.TabPages[1])
+            {
+                foreach (ItemEntry ie in itemEntries)
+                {
+                    string[] cols = new string[3];
+                    cols[0] = ie.Text;
+                    cols[1] = "-";
+                    cols[2] = "-";
+                    ListViewItem liv = new ListViewItem(cols);
+                    itemsOverview.Items.Add(liv);
+                }
+                TimeLeft.Enabled = true;
+            }
+            else
+            {
+                itemsOverview.Items.Clear();
+                TimeLeft.Enabled = false;
+            }
         }
     }
 }
