@@ -1,6 +1,5 @@
 ﻿using System.Configuration;
 using System.Data.Odbc;
-using System.Data.OleDb;
 using System.Data.ProviderBase;
 using System;
 using System.Collections.Generic;
@@ -25,7 +24,7 @@ namespace DSO_Economic
         private static List<String> itemnames;
         public static List<ItemEntry> itemEntries;
         private static List<ResourceEntry> resourceEntries;
-        private static OleDbConnection DbConnection;
+        private static OdbcConnection DbConnection;
 
 
         private static bool usecustomdb = false;
@@ -47,6 +46,9 @@ namespace DSO_Economic
         static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
 
         [DllImport("Kernel32.dll")]
+        static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+
+        [DllImport("Kernel32.dll")]
         static extern uint GetLastError();
 
 
@@ -54,11 +56,6 @@ namespace DSO_Economic
         {
             InitializeComponent();
         }
-        private static uint getDword(byte[] b, uint i)
-        {
-            return (uint)(b[i] + b[i + 1] * 0x100 + b[i + 2] * 0x10000 + b[i + 3] * 0x1000000);
-        }
-
 
         #region MemorySearchFunctions
         private void findResources(IntPtr handle, uint start, uint size)
@@ -76,7 +73,7 @@ namespace DSO_Economic
             if (size > maxsearchoffset)
                 size = maxsearchoffset;
 
-            byte[] mem = new byte[size];
+            uint[] mem = new uint[size/4];
             if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
             {
                 if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
@@ -94,21 +91,21 @@ namespace DSO_Economic
             {
                 do
                 {
-                    v = getDword(mem, i);
+                    v = mem[(i)/4];
                     if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                         break;
 
-                    uint y = getDword(mem, i + 0x40);
+                    uint y = mem[(i + 0x40)/4];
                     if (y != 2) break;
 
-                    v = getDword(mem, i + 0x44);
+                    v = mem[(i + 0x44)/4];
                     if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5)) break;
 
 
-                    w = getDword(mem, i + 0x48);
+                    w = mem[(i + 0x48)/4];
                     if (w > 5000) break;
 
-                    v = getDword(mem, i + 0x54);
+                    v = mem[(i + 0x54)/4];
                     if (((v == 5) || (v == 25)) && (!trees)) break;
 
                     if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
@@ -138,8 +135,8 @@ namespace DSO_Economic
             if (size > maxsearchoffset)
                 size = maxsearchoffset;
 
-            byte[] mem = new byte[size];
-            byte[] mem2 = new byte[0x14];
+            uint[] mem = new uint[size / 4];
+            uint[] mem2 = new uint[0x14 / 4];
             if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
                 if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
                     size = br;
@@ -150,24 +147,24 @@ namespace DSO_Economic
                 }
 
             if (size == 0) return;
-            for (i = 0; i < size - 0x20; i+=4)
+            for (i = 0; i < size - 0x20; i += 4)
             {
-                
+
                 starti = i;
 
-                w = getDword(mem, i);
+                w = mem[i/4];
 
                 if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize))) continue;
 
-                w = getDword(mem, i + 0x04);
+                w = mem[(i + 0x04)/4];
                 if ((w & 0xFF) != 3) continue;
 
-                vartype = getDword(mem, i + 0x0C);
+                vartype = mem[(i + 0x0C)/4];
                 if (vartype == 0) continue;
 
-                v = getDword(mem, i + 0x10);
+                v = mem[(i + 0x10)/4];
 
-                w = getDword(mem, i + 0x14);
+                w = mem[(i + 0x14)/5];
 
                 if (v == 0) continue;
                 if (v > maxstorage) continue;
@@ -177,14 +174,14 @@ namespace DSO_Economic
 
                 if (max == 100) continue;
 
-                Debug.Print("{0:x} {1:x} {2} {3}",start+i, vartype,v,w);
+                Debug.Print("{0:x} {1:x} {2} {3}", start + i, vartype, v, w);
 
                 itemEntries.Add(new ItemEntry(start + i));
             }
             return;
         }
 
-       
+
         #endregion
 
 
@@ -233,50 +230,49 @@ namespace DSO_Economic
             uint MaxAddress = 0x7fffffff;
             byte[] mem = new byte[8];
 
-            for (int y = 0; y < itemEntries.Count - 1; y++)
+
+            uint br = 0;
+            do
             {
-                long off1 = itemEntries[y].memoffset ^ 0x01;
-                long off2 = itemEntries[y+1].memoffset ^ 0x01;
-
-                uint br = 0;
-                do
+                bool result = VirtualQueryEx(handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
+                if (!result) break;
+                if (m.AllocationBase == 0)
                 {
-                    bool result = VirtualQueryEx(handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
-                    if (!result) break;
-                    if (m.AllocationBase == 0)
-                    {
-                        address = (long)(m.BaseAddress + m.RegionSize);
-                        continue;
-                    }
+                    address = (long)(m.BaseAddress + m.RegionSize);
+                    continue;
+                }
 
-                    Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
-                    byte[] mem2 = new byte[m.RegionSize];
-                    ReadProcessMemory(handle, (IntPtr)m.BaseAddress, mem2, (uint)m.RegionSize, ref br);
+                Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
+                uint[] mem2 = new uint[m.RegionSize/4];
+                ReadProcessMemory(handle, (IntPtr)m.BaseAddress, mem2, (uint)m.RegionSize, ref br);
+
+                for (int y = 0; y < itemEntries.Count - 1; y++)
+                {
+                    long off1 = itemEntries[y].memoffset;
+                    long off2 = itemEntries[y + 1].memoffset;
 
                     for (uint i = 0; i < m.RegionSize - 8; i += 4)
                     {
-                        if (getDword(mem2, i) == off1)
-                            if (getDword(mem2, i + 4) == off2)
+                        if ((mem2[ i/4] & 0xFFFFFFF8) == (off1 & 0xFFFFFFF8))
+                            if ((mem2[(i+4) / 4] & 0xFFFFFFF8) == (off2 & 0xFFFFFFF8))
                             {
-                                while (getDword(mem2, i) != 0)
+                                while (mem2[i/4] != 0)
                                     i -= 4;
                                 i += 12;
                                 itemEntries = new List<ItemEntry>();
                                 ItemEntry.reset();
                                 for (int x = 0; x < itemnames.Count; x++)
                                 {
-                                    ItemEntry ie = new ItemEntry(getDword(mem2, (uint)(i + x * 4)) & 0xFFFFFFF8);
+                                    ItemEntry ie = new ItemEntry(mem2[(uint)(i + x * 4)/4] & 0xFFFFFFF8);
                                     if (x == 0) max = ie.max;
                                     itemEntries.Add(ie);
                                 }
                                 return;
                             }
                     }
-
-                    address = (long)(m.BaseAddress + m.RegionSize);
-
-                } while (address <= MaxAddress);
-            }
+                }
+                address = (long)(m.BaseAddress + m.RegionSize);
+            } while (address <= MaxAddress);
         }
 
         private void DSOEForm_Load(object sender, EventArgs e)
@@ -386,24 +382,24 @@ namespace DSO_Economic
             uint MaxAddress = 0x7fffffff;
             long address = 0;
             bool result;
-            
+
 
             Loading LDForm = new Loading();
             LDForm.Show();
 
             if (usecustomdb)
             {
-                DbConnection = new OleDbConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
             }
             if (!usetxt)
-                DbConnection = new OleDbConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
             else
-                DbConnection = new OleDbConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
 
 
             DbConnection.Open();
-            OleDbCommand DbCommand = DbConnection.CreateCommand();
-            OleDbDataReader DbReader;
+            OdbcCommand DbCommand = DbConnection.CreateCommand();
+            OdbcDataReader DbReader;
             DbCommand.CommandText = "SELECT Name FROM items" + tblext + " ORDER BY ID ASC";
             DbReader = DbCommand.ExecuteReader();
 
@@ -455,21 +451,21 @@ namespace DSO_Economic
                         Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
                         findItems(p.Handle, (uint)m.BaseAddress, (uint)m.RegionSize);
                         findResources(p.Handle, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
-                        
+
                         address = (long)(m.BaseAddress + m.RegionSize);
 
                     } while (address <= MaxAddress);
 
                     if ((Main != null) && (itemEntries.Count > 0)) break;
                 }
-                if ((Main != null) && (itemEntries.Count>0)) break;
+                if ((Main != null) && (itemEntries.Count > 0)) break;
             }
             #endregion
 
             if ((Main != null) && (itemEntries.Count > 0))
             {
-                if (itemEntries.Count > itemnames.Count)
-                    AutoFix(Main.Handle);
+                //                if (itemEntries.Count > itemnames.Count)
+                AutoFix(Main.Handle);
 
                 resources.DataSource = resourceEntries;
                 resources.DisplayMember = "Text";
@@ -529,7 +525,8 @@ namespace DSO_Economic
             private static int last_ID = -1;
             public string Amount
             {
-                get{
+                get
+                {
                     return amount.ToString();
                 }
             }
@@ -538,10 +535,10 @@ namespace DSO_Economic
                 get
                 {
                     if (memoffset == 0) return 0;
-                    byte[] mem = new byte[0x20];
+                    uint[] mem = new uint[0x20/4];
                     UInt32 br = 0;
                     ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-                    return getDword(mem, 0x14);
+                    return mem[0x14/4];
                 }
             }
             public uint max
@@ -549,10 +546,10 @@ namespace DSO_Economic
                 get
                 {
                     if (memoffset == 0) return 0;
-                    byte[] mem = new byte[0x20];
+                    uint[] mem = new uint[0x20/4];
                     UInt32 br = 0;
                     ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-                    return getDword(mem, 0x10);
+                    return mem[0x10/4];
                 }
             }
             public uint ID
@@ -590,7 +587,7 @@ namespace DSO_Economic
             {
                 try
                 {
-                    OleDbCommand DbCommand = DbConnection.CreateCommand();
+                    OdbcCommand DbCommand = DbConnection.CreateCommand();
                     DbCommand.CommandText = "INSERT INTO History" + tblext + " (ID,[DateTime],Amount) VALUES (" + ID + ",'" + DateTime.Now + "'," + amount + ")";
                     DbCommand.ExecuteNonQuery();
                 }
@@ -641,16 +638,16 @@ namespace DSO_Economic
                 get
                 {
                     UInt32 br = 0;
-                    byte[] mem = new byte[0x18];
+                    uint[] mem = new uint[0x18/4];
                     if ((Main != null) && (memoffset != 0))
                     {
                         ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x18, ref br);
 
-                        if ((int)getDword(mem, 0) == 2)
+                        if ((int)mem[0] == 2)
                         {
-                            amount = getDword(mem, 8);
+                            amount = mem[8/4];
 
-                            uint max = getDword(mem, 0x14);
+                            uint max = mem[0x14/4];
                             string name = "";
                             switch (max)
                             {
@@ -708,9 +705,9 @@ namespace DSO_Economic
         private void items_SelectedValueChanged(object sender, EventArgs e)
         {
             if (items.SelectedIndex == -1) return;
-            OleDbCommand DbCommand = DbConnection.CreateCommand();
+            OdbcCommand DbCommand = DbConnection.CreateCommand();
             DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>DateAdd('d',-1,NOW()) ORDER BY [DateTime] ASC";
-            OleDbDataReader DbReader = DbCommand.ExecuteReader();
+            OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
             PointPairList list = new PointPairList();
             while (DbReader.Read())
@@ -727,9 +724,9 @@ namespace DSO_Economic
         {
             //TODO: genauere Berechnung mittels Korrelationsgerade
 
-            OleDbCommand DbCommand = DbConnection.CreateCommand();
+            OdbcCommand DbCommand = DbConnection.CreateCommand();
             DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
-            OleDbDataReader DbReader = DbCommand.ExecuteReader();
+            OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
             if (DbReader.Read())
             {
@@ -742,15 +739,15 @@ namespace DSO_Economic
                 }
                 else
                 {
-                    TimeSpan t = DateTime.Now-DbReader.GetDateTime(0);
+                    TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
                     DbReader.Close();
-                    
-                    double ms=(amt2/((amt2-amt)/t.TotalMilliseconds));
-                    int h=(int)(ms/1000/60/60);
-                    int min=(int)((ms-h*60*60*1000)/1000/60);
-                    int s=(int)((ms-h*60*60*1000+min*60*1000)/1000);
-                    
-                    TimeSpan t2=new TimeSpan(h,min,s);
+
+                    double ms = (amt2 / ((amt2 - amt) / t.TotalMilliseconds));
+                    int h = (int)(ms / 1000 / 60 / 60);
+                    int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
+                    int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
+
+                    TimeSpan t2 = new TimeSpan(h, min, s);
                     return t2.ToString();
                 }
             }
@@ -762,9 +759,9 @@ namespace DSO_Economic
         {
             //TODO: genauere Berechnung mittels Korrelationsgerade
 
-            OleDbCommand DbCommand = DbConnection.CreateCommand();
+            OdbcCommand DbCommand = DbConnection.CreateCommand();
             DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
-            OleDbDataReader DbReader = DbCommand.ExecuteReader();
+            OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
             if (DbReader.Read())
             {
@@ -780,7 +777,7 @@ namespace DSO_Economic
                     TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
                     DbReader.Close();
 
-                    double ms = ((max-amt2) / ((amt - amt2) / t.TotalMilliseconds));
+                    double ms = ((max - amt2) / ((amt - amt2) / t.TotalMilliseconds));
                     int h = (int)(ms / 1000 / 60 / 60);
                     int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
                     int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
@@ -795,7 +792,7 @@ namespace DSO_Economic
         }
         private void TimeLeft_Tick(object sender, EventArgs e)
         {
-            uint i=0;
+            uint i = 0;
             foreach (ListViewItem liv in itemsOverview.Items)
             {
                 liv.SubItems[1].Text = getTimeLeftEmpty(i);
@@ -805,7 +802,7 @@ namespace DSO_Economic
 
         private void tabCtrl_TabIndexChanged(object sender, EventArgs e)
         {
-            
+
         }
 
         private void tabCtrl_Selected(object sender, TabControlEventArgs e)
