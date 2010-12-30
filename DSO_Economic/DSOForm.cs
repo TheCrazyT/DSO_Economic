@@ -25,6 +25,8 @@ namespace DSO_Economic
         public static List<ItemEntry> itemEntries;
         private static List<ResourceEntry> resourceEntries;
         private static OdbcConnection DbConnection;
+        private static OdbcConnection DbConnection2;
+        private static OdbcConnection DbConnection3;
 
 
         private static bool usecustomdb = false;
@@ -73,7 +75,7 @@ namespace DSO_Economic
             if (size > maxsearchoffset)
                 size = maxsearchoffset;
 
-            uint[] mem = new uint[size/4];
+            uint[] mem = new uint[size / 4];
             if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
             {
                 if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
@@ -91,21 +93,21 @@ namespace DSO_Economic
             {
                 do
                 {
-                    v = mem[(i)/4];
+                    v = mem[(i) / 4];
                     if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                         break;
 
-                    uint y = mem[(i + 0x40)/4];
+                    uint y = mem[(i + 0x40) / 4];
                     if (y != 2) break;
 
-                    v = mem[(i + 0x44)/4];
+                    v = mem[(i + 0x44) / 4];
                     if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5)) break;
 
 
-                    w = mem[(i + 0x48)/4];
+                    w = mem[(i + 0x48) / 4];
                     if (w > 5000) break;
 
-                    v = mem[(i + 0x54)/4];
+                    v = mem[(i + 0x54) / 4];
                     if (((v == 5) || (v == 25)) && (!trees)) break;
 
                     if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
@@ -152,19 +154,19 @@ namespace DSO_Economic
 
                 starti = i;
 
-                w = mem[i/4];
+                w = mem[i / 4];
 
                 if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize))) continue;
 
-                w = mem[(i + 0x04)/4];
+                w = mem[(i + 0x04) / 4];
                 if ((w & 0xFF) != 3) continue;
 
-                vartype = mem[(i + 0x0C)/4];
+                vartype = mem[(i + 0x0C) / 4];
                 if (vartype == 0) continue;
 
-                v = mem[(i + 0x10)/4];
+                v = mem[(i + 0x10) / 4];
 
-                w = mem[(i + 0x14)/5];
+                w = mem[(i + 0x14) / 5];
 
                 if (v == 0) continue;
                 if (v > maxstorage) continue;
@@ -228,7 +230,7 @@ namespace DSO_Economic
             MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
             long address = 0;
             uint MaxAddress = 0x7fffffff;
-            byte[] mem = new byte[8];
+            uint[] mem = new uint[1];
 
 
             uint br = 0;
@@ -243,36 +245,43 @@ namespace DSO_Economic
                 }
 
                 Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
-                uint[] mem2 = new uint[m.RegionSize/4];
+                uint[] mem2 = new uint[m.RegionSize / 4];
                 ReadProcessMemory(handle, (IntPtr)m.BaseAddress, mem2, (uint)m.RegionSize, ref br);
 
-                for (int y = 0; y < itemEntries.Count - 1; y++)
+                for (int y = 0; y < itemEntries.Count - 2; y++)
                 {
                     long off1 = itemEntries[y].memoffset;
-                    long off2 = itemEntries[y + 1].memoffset;
 
                     for (uint i = 0; i < m.RegionSize - 8; i += 4)
                     {
-                        if ((mem2[ i/4] & 0xFFFFFFF8) == (off1 & 0xFFFFFFF8))
-                            if ((mem2[(i+4) / 4] & 0xFFFFFFF8) == (off2 & 0xFFFFFFF8))
+                        if ((mem2[i / 4] & 0xFFFFFFF8) == (off1 & 0xFFFFFFF8))
+                        {
+                            while (mem2[i / 4] != 0)
+                                i -= 4;
+                            i += 12;
+
+                            if (!ReadProcessMemory(handle, (IntPtr)(mem2[i / 4] & 0xFFFFFFF8), mem, 4, ref br)) continue;
+
+                            if ((mem[0] < (uint)npswf.BaseAddress) || (mem[0] > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                                continue;
+
+                            Debug.Print("Table at: {0:x}", m.BaseAddress + i);
+                            itemEntries = new List<ItemEntry>();
+                            ItemEntry.reset();
+                            for (int x = 0; x < itemnames.Count; x++)
                             {
-                                while (mem2[i/4] != 0)
-                                    i -= 4;
-                                i += 12;
-                                itemEntries = new List<ItemEntry>();
-                                ItemEntry.reset();
-                                for (int x = 0; x < itemnames.Count; x++)
-                                {
-                                    ItemEntry ie = new ItemEntry(mem2[(uint)(i + x * 4)/4] & 0xFFFFFFF8);
-                                    if (x == 0) max = ie.max;
-                                    itemEntries.Add(ie);
-                                }
-                                return;
+                                ItemEntry ie = new ItemEntry(mem2[(uint)(i + x * 4) / 4] & 0xFFFFFFF8);
+                                if (x == 0) max = ie.max;
+                                itemEntries.Add(ie);
                             }
+                            Debug.Print("Autofixed ...");
+                            return;
+                        }
                     }
                 }
                 address = (long)(m.BaseAddress + m.RegionSize);
             } while (address <= MaxAddress);
+            Debug.Print("Autofix not possible ...");
         }
 
         private void DSOEForm_Load(object sender, EventArgs e)
@@ -390,14 +399,27 @@ namespace DSO_Economic
             if (usecustomdb)
             {
                 DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
             }
             if (!usetxt)
+            {
                 DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+            }
             else
+            {
                 DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+            }
 
 
             DbConnection.Open();
+            DbConnection2.Open();
+            DbConnection3.Open();
+
             OdbcCommand DbCommand = DbConnection.CreateCommand();
             OdbcDataReader DbReader;
             DbCommand.CommandText = "SELECT Name FROM items" + tblext + " ORDER BY ID ASC";
@@ -535,10 +557,10 @@ namespace DSO_Economic
                 get
                 {
                     if (memoffset == 0) return 0;
-                    uint[] mem = new uint[0x20/4];
+                    uint[] mem = new uint[0x20 / 4];
                     UInt32 br = 0;
                     ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-                    return mem[0x14/4];
+                    return mem[0x14 / 4];
                 }
             }
             public uint max
@@ -546,10 +568,10 @@ namespace DSO_Economic
                 get
                 {
                     if (memoffset == 0) return 0;
-                    uint[] mem = new uint[0x20/4];
+                    uint[] mem = new uint[0x20 / 4];
                     UInt32 br = 0;
                     ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-                    return mem[0x10/4];
+                    return mem[0x10 / 4];
                 }
             }
             public uint ID
@@ -587,8 +609,8 @@ namespace DSO_Economic
             {
                 try
                 {
-                    OdbcCommand DbCommand = DbConnection.CreateCommand();
-                    DbCommand.CommandText = "INSERT INTO History" + tblext + " (ID,[DateTime],Amount) VALUES (" + ID + ",'" + DateTime.Now + "'," + amount + ")";
+                    OdbcCommand DbCommand = DbConnection3.CreateCommand();
+                    DbCommand.CommandText = "INSERT INTO History" + tblext + " (ID,[DateTime],Amount) VALUES (" + ID + ",CDate('" + DateTime.Now + "')," + amount + ")";
                     DbCommand.ExecuteNonQuery();
                 }
                 catch (Exception e)
@@ -638,16 +660,16 @@ namespace DSO_Economic
                 get
                 {
                     UInt32 br = 0;
-                    uint[] mem = new uint[0x18/4];
+                    uint[] mem = new uint[0x18 / 4];
                     if ((Main != null) && (memoffset != 0))
                     {
                         ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x18, ref br);
 
                         if ((int)mem[0] == 2)
                         {
-                            amount = mem[8/4];
+                            amount = mem[8 / 4];
 
-                            uint max = mem[0x14/4];
+                            uint max = mem[0x14 / 4];
                             string name = "";
                             switch (max)
                             {
@@ -705,88 +727,111 @@ namespace DSO_Economic
         private void items_SelectedValueChanged(object sender, EventArgs e)
         {
             if (items.SelectedIndex == -1) return;
-            OdbcCommand DbCommand = DbConnection.CreateCommand();
-            DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>DateAdd('d',-1,NOW()) ORDER BY [DateTime] ASC";
-            OdbcDataReader DbReader = DbCommand.ExecuteReader();
-
-            PointPairList list = new PointPairList();
-            while (DbReader.Read())
+            try
             {
+                OdbcCommand DbCommand = DbConnection2.CreateCommand();
+                //DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>DateAdd('d',-1,NOW()) ORDER BY [DateTime] ASC";
+                DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>CDate('" + DateTime.Now.AddDays(-1) + "') ORDER BY [DateTime] ASC";
+                OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
-                double diff = new XDate(DbReader.GetDateTime(0));
-                list.Add(diff, DbReader.GetInt32(1));
+                PointPairList list = new PointPairList();
+                while (DbReader.Read())
+                {
+
+                    double diff = new XDate(DbReader.GetDateTime(0));
+                    list.Add(diff, DbReader.GetInt32(1));
+                }
+                DbReader.Close();
+                CreateGraph(graph, itemnames[items.SelectedIndex], list);
+                graph.Refresh();
             }
-            DbReader.Close();
-            CreateGraph(graph, itemnames[items.SelectedIndex], list);
-            graph.Refresh();
+            catch (Exception er)
+            {
+                Debug.Print(er.StackTrace);
+            }
         }
         private string getTimeLeftEmpty(uint ID)
         {
             //TODO: genauere Berechnung mittels Korrelationsgerade
 
-            OdbcCommand DbCommand = DbConnection.CreateCommand();
-            DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
-            OdbcDataReader DbReader = DbCommand.ExecuteReader();
-
-            if (DbReader.Read())
+            try
             {
-                long amt = DbReader.GetInt32(1);
-                long amt2 = itemEntries[(int)ID].amount;
-                if (amt >= amt2)
-                {
-                    DbReader.Close();
-                    return "-";
-                }
-                else
-                {
-                    TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
-                    DbReader.Close();
+                OdbcCommand DbCommand = DbConnection2.CreateCommand();
+                //            DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
+                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
-                    double ms = (amt2 / ((amt2 - amt) / t.TotalMilliseconds));
-                    int h = (int)(ms / 1000 / 60 / 60);
-                    int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
-                    int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
+                if (DbReader.Read())
+                {
+                    long amt = DbReader.GetInt32(1);
+                    long amt2 = itemEntries[(int)ID].amount;
+                    if (amt >= amt2)
+                    {
+                        DbReader.Close();
+                        return "-";
+                    }
+                    else
+                    {
+                        TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
+                        DbReader.Close();
 
-                    TimeSpan t2 = new TimeSpan(h, min, s);
-                    return t2.ToString();
+                        double ms = (amt2 / ((amt2 - amt) / t.TotalMilliseconds));
+                        int h = (int)(ms / 1000 / 60 / 60);
+                        int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
+                        int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
+
+                        TimeSpan t2 = new TimeSpan(h, min, s);
+                        return t2.ToString();
+                    }
                 }
+                DbReader.Close();
             }
-            DbReader.Close();
+            catch (Exception e)
+            {
+                Debug.Print(e.StackTrace);
+            }
 
             return "-";
         }
         private string getTimeLeftFull(uint ID)
         {
             //TODO: genauere Berechnung mittels Korrelationsgerade
-
-            OdbcCommand DbCommand = DbConnection.CreateCommand();
-            DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
-            OdbcDataReader DbReader = DbCommand.ExecuteReader();
-
-            if (DbReader.Read())
+            try
             {
-                long amt = DbReader.GetInt32(1);
-                long amt2 = itemEntries[(int)ID].amount;
-                if (amt <= amt2)
-                {
-                    DbReader.Close();
-                    return "-";
-                }
-                else
-                {
-                    TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
-                    DbReader.Close();
+                OdbcCommand DbCommand = DbConnection2.CreateCommand();
+                //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
+                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
-                    double ms = ((max - amt2) / ((amt - amt2) / t.TotalMilliseconds));
-                    int h = (int)(ms / 1000 / 60 / 60);
-                    int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
-                    int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
+                if (DbReader.Read())
+                {
+                    long amt = DbReader.GetInt32(1);
+                    long amt2 = itemEntries[(int)ID].amount;
+                    if (amt <= amt2)
+                    {
+                        DbReader.Close();
+                        return "-";
+                    }
+                    else
+                    {
+                        TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
+                        DbReader.Close();
 
-                    TimeSpan t2 = new TimeSpan(h, min, s);
-                    return t2.ToString();
+                        double ms = ((max - amt2) / ((amt - amt2) / t.TotalMilliseconds));
+                        int h = (int)(ms / 1000 / 60 / 60);
+                        int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
+                        int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
+
+                        TimeSpan t2 = new TimeSpan(h, min, s);
+                        return t2.ToString();
+                    }
                 }
+                DbReader.Close();
             }
-            DbReader.Close();
+            catch (Exception e)
+            {
+                Debug.Print(e.StackTrace);
+            }
 
             return "-";
         }
