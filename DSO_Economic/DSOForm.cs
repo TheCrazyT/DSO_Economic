@@ -166,7 +166,7 @@ namespace DSO_Economic
 
                 v = mem[(i + 0x10) / 4];
 
-                w = mem[(i + 0x14) / 5];
+                w = mem[(i + 0x14) / 4];
 
                 if (v == 0) continue;
                 if (v > maxstorage) continue;
@@ -251,10 +251,12 @@ namespace DSO_Economic
                 for (int y = 0; y < itemEntries.Count - 2; y++)
                 {
                     long off1 = itemEntries[y].memoffset;
+                    long off2 = itemEntries[y+1].memoffset;
 
                     for (uint i = 0; i < m.RegionSize - 8; i += 4)
                     {
                         if ((mem2[i / 4] & 0xFFFFFFF8) == (off1 & 0xFFFFFFF8))
+                            if ((mem2[i / 4+1] & 0xFFFFFFF8) == (off2 & 0xFFFFFFF8))
                         {
                             while (mem2[i / 4] != 0)
                                 i -= 4;
@@ -764,7 +766,7 @@ namespace DSO_Economic
                 {
                     long amt = DbReader.GetInt32(1);
                     long amt2 = itemEntries[(int)ID].amount;
-                    if (amt >= amt2)
+                    if (amt <= amt2)
                     {
                         DbReader.Close();
                         return "-";
@@ -774,7 +776,7 @@ namespace DSO_Economic
                         TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
                         DbReader.Close();
 
-                        double ms = (amt2 / ((amt2 - amt) / t.TotalMilliseconds));
+                        double ms = (amt2 / ((amt - amt2) / t.TotalMilliseconds));
                         int h = (int)(ms / 1000 / 60 / 60);
                         int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
                         int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
@@ -806,7 +808,7 @@ namespace DSO_Economic
                 {
                     long amt = DbReader.GetInt32(1);
                     long amt2 = itemEntries[(int)ID].amount;
-                    if (amt <= amt2)
+                    if (amt >= amt2)
                     {
                         DbReader.Close();
                         return "-";
@@ -816,7 +818,7 @@ namespace DSO_Economic
                         TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
                         DbReader.Close();
 
-                        double ms = ((max - amt2) / ((amt - amt2) / t.TotalMilliseconds));
+                        double ms = ((max - amt2) / ((amt2 - amt) / t.TotalMilliseconds));
                         int h = (int)(ms / 1000 / 60 / 60);
                         int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
                         int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
