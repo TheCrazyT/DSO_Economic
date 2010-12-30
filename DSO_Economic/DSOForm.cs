@@ -415,11 +415,7 @@ namespace DSO_Economic
                 DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
             }
 
-
             DbConnection.Open();
-            DbConnection2.Open();
-            DbConnection3.Open();
-
             OdbcCommand DbCommand = DbConnection.CreateCommand();
             OdbcDataReader DbReader;
             DbCommand.CommandText = "SELECT Name FROM items" + tblext + " ORDER BY ID ASC";
@@ -431,6 +427,8 @@ namespace DSO_Economic
                 itemnames.Add(DbReader.GetString(0));
             }
             DbReader.Close();
+            DbConnection.Close();
+
 
             itemEntries = new List<ItemEntry>();
             resourceEntries = new List<ResourceEntry>();
@@ -719,9 +717,11 @@ namespace DSO_Economic
 
         private void ItemRefresh_Tick(object sender, EventArgs e)
         {
+            DbConnection3.Open();
             refreshItemList();
             foreach (ItemEntry i in itemEntries)
                 i.save();
+            DbConnection3.Close();
         }
 
         private void items_SelectedValueChanged(object sender, EventArgs e)
@@ -729,8 +729,8 @@ namespace DSO_Economic
             if (items.SelectedIndex == -1) return;
             try
             {
+                DbConnection2.Open();
                 OdbcCommand DbCommand = DbConnection2.CreateCommand();
-                //DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>DateAdd('d',-1,NOW()) ORDER BY [DateTime] ASC";
                 DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>CDate('" + DateTime.Now.AddDays(-1) + "') ORDER BY [DateTime] ASC";
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
@@ -742,6 +742,7 @@ namespace DSO_Economic
                     list.Add(diff, DbReader.GetInt32(1));
                 }
                 DbReader.Close();
+                DbConnection2.Close();
                 CreateGraph(graph, itemnames[items.SelectedIndex], list);
                 graph.Refresh();
             }
@@ -753,11 +754,9 @@ namespace DSO_Economic
         private string getTimeLeftEmpty(uint ID)
         {
             //TODO: genauere Berechnung mittels Korrelationsgerade
-
             try
             {
                 OdbcCommand DbCommand = DbConnection2.CreateCommand();
-                //            DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
                 DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
@@ -837,12 +836,14 @@ namespace DSO_Economic
         }
         private void TimeLeft_Tick(object sender, EventArgs e)
         {
+            DbConnection2.Open();
             uint i = 0;
             foreach (ListViewItem liv in itemsOverview.Items)
             {
                 liv.SubItems[1].Text = getTimeLeftEmpty(i);
                 liv.SubItems[2].Text = getTimeLeftFull(i++);
             }
+            DbConnection2.Close();
         }
 
         private void tabCtrl_TabIndexChanged(object sender, EventArgs e)
