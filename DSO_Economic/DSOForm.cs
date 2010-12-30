@@ -166,7 +166,7 @@ namespace DSO_Economic
 
                 v = mem[(i + 0x10) / 4];
 
-                w = mem[(i + 0x14) / 5];
+                w = mem[(i + 0x14) / 4];
 
                 if (v == 0) continue;
                 if (v > maxstorage) continue;
@@ -251,10 +251,12 @@ namespace DSO_Economic
                 for (int y = 0; y < itemEntries.Count - 2; y++)
                 {
                     long off1 = itemEntries[y].memoffset;
+                    long off2 = itemEntries[y+1].memoffset;
 
                     for (uint i = 0; i < m.RegionSize - 8; i += 4)
                     {
                         if ((mem2[i / 4] & 0xFFFFFFF8) == (off1 & 0xFFFFFFF8))
+                            if ((mem2[i / 4+1] & 0xFFFFFFF8) == (off2 & 0xFFFFFFF8))
                         {
                             while (mem2[i / 4] != 0)
                                 i -= 4;
