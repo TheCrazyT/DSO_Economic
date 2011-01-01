@@ -32,20 +32,23 @@
             this.ItemRefresh = new System.Windows.Forms.Timer(this.components);
             this.tabCtrl = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.resources = new System.Windows.Forms.ListBox();
             this.graph = new ZedGraph.ZedGraphControl();
             this.items = new System.Windows.Forms.ListBox();
-            this.TimeLeft = new System.Windows.Forms.Timer(this.components);
+            this.tabPage2 = new System.Windows.Forms.TabPage();
             this.itemsOverview = new System.Windows.Forms.ListView();
             this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
+            this.TimeLeft = new System.Windows.Forms.Timer(this.components);
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.lst_buildings = new System.Windows.Forms.ListBox();
             this.tabCtrl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.tabPage3.SuspendLayout();
             this.SuspendLayout();
             // 
             // ItemRefresh
@@ -60,13 +63,13 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.tabCtrl.Controls.Add(this.tabPage1);
             this.tabCtrl.Controls.Add(this.tabPage2);
+            this.tabCtrl.Controls.Add(this.tabPage3);
             this.tabCtrl.Location = new System.Drawing.Point(1, 1);
             this.tabCtrl.Name = "tabCtrl";
             this.tabCtrl.SelectedIndex = 0;
             this.tabCtrl.Size = new System.Drawing.Size(760, 587);
             this.tabCtrl.TabIndex = 5;
             this.tabCtrl.Selected += new System.Windows.Forms.TabControlEventHandler(this.tabCtrl_Selected);
-            this.tabCtrl.TabIndexChanged += new System.EventHandler(this.tabCtrl_TabIndexChanged);
             // 
             // tabPage1
             // 
@@ -82,17 +85,6 @@
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Graph";
             this.tabPage1.UseVisualStyleBackColor = true;
-            // 
-            // tabPage2
-            // 
-            this.tabPage2.Controls.Add(this.itemsOverview);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(752, 561);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Zeitübersicht";
-            this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // label2
             // 
@@ -152,10 +144,16 @@
             this.items.TabIndex = 5;
             this.items.SelectedValueChanged += new System.EventHandler(this.items_SelectedValueChanged);
             // 
-            // TimeLeft
+            // tabPage2
             // 
-            this.TimeLeft.Interval = 5000;
-            this.TimeLeft.Tick += new System.EventHandler(this.TimeLeft_Tick);
+            this.tabPage2.Controls.Add(this.itemsOverview);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(752, 561);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Zeitübersicht";
+            this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // itemsOverview
             // 
@@ -186,6 +184,29 @@
             this.columnHeader3.Text = "Zeit bis Lager voll";
             this.columnHeader3.Width = 160;
             // 
+            // TimeLeft
+            // 
+            this.TimeLeft.Interval = 5000;
+            this.TimeLeft.Tick += new System.EventHandler(this.TimeLeft_Tick);
+            // 
+            // tabPage3
+            // 
+            this.tabPage3.Controls.Add(this.lst_buildings);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Size = new System.Drawing.Size(752, 561);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Gebäude";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // lst_buildings
+            // 
+            this.lst_buildings.FormattingEnabled = true;
+            this.lst_buildings.Location = new System.Drawing.Point(7, 3);
+            this.lst_buildings.Name = "lst_buildings";
+            this.lst_buildings.Size = new System.Drawing.Size(186, 550);
+            this.lst_buildings.TabIndex = 0;
+            // 
             // DSOEForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -198,6 +219,7 @@
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
+            this.tabPage3.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -218,6 +240,8 @@
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader3;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.ListBox lst_buildings;
     }
 }
 

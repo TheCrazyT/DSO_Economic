@@ -17,13 +17,17 @@ namespace DSO_Economic
     {
         private static ProcessModule npswf = null;
         private static Process Main = null;
+        private static uint MainClass = 0;
         private static long max;
         private static uint vartype;
         private static uint lastresourceEntriesID = 0;
+        private static uint BuildingsPointer = 0;
 
         private static List<String> itemnames;
         public static List<ItemEntry> itemEntries;
         private static List<ResourceEntry> resourceEntries;
+        private static List<BuildingEntry> buildingEntries;
+        private static Dictionary<String,uint> Buildings;
         private static OdbcConnection DbConnection;
         private static OdbcConnection DbConnection2;
         private static OdbcConnection DbConnection3;
@@ -48,7 +52,13 @@ namespace DSO_Economic
         static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
 
         [DllImport("Kernel32.dll")]
+        static extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+
+        [DllImport("Kernel32.dll")]
         static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+
+        [DllImport("Kernel32.dll")]
+        static extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
 
         [DllImport("Kernel32.dll")]
         static extern uint GetLastError();
@@ -60,129 +70,147 @@ namespace DSO_Economic
         }
 
         #region MemorySearchFunctions
-        private void findResources(IntPtr handle, uint start, uint size)
+        private void findMainClass(IntPtr handle,uint[] mem, uint start, uint size)
         {
             Application.DoEvents();
-
-            if (size > maxmemsize)
-                return;
-
-            UInt32 br = 0;
             uint i = 0;
             uint v;
             uint w;
 
-            if (size > maxsearchoffset)
-                size = maxsearchoffset;
-
-            uint[] mem = new uint[size / 4];
-            if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
+            for (i = 0; i < size - 0x5C; i += 4)
             {
-                if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
-                    size = br;
-                else
-                {
-                    Debug.Print("Last error:{0:x}", GetLastError());
-                    return;
-                }
-            }
-            if (size == 0) return;
+                v = mem[(i) / 4];
+                if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                    continue;
+                if (mem[(i + 0x20) / 4] > 40)
+                    continue;
+                if (mem[(i + 0x28) / 4] > 40)
+                    continue;
+                if (mem[(i + 0x2C) / 4] == 0)
+                    continue;
+                if (mem[(i + 0x30) / 4] > 40)
+                    continue;
+                if (mem[(i + 0x3C) / 4] > 40)
+                    continue;
+                v = mem[(i+0x38) / 4];
+                w = mem[(i + 0x40) / 4];
+                if (w < v) continue;
+                if (v > 1000) continue;
+                if (w > 1000) continue;
+                if (w == 0) continue;
 
+                w = mem[(i + 0x5c) / 4];
+                w += 0x10;
+
+                uint br = 0;
+                uint[] mem2 = new uint[4];
+                if (!ReadProcessMemory(handle, w, mem2, 4*4, ref br)) continue;
+
+                if (mem2[0] != 44) continue;
+                if (mem2[1] != 46) continue;
+
+                uint starttbl = mem2[3];
+                if ((starttbl > (uint)npswf.BaseAddress) && (starttbl < (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                    continue;
+
+                uint sz=(uint)(4 * itemnames.Count);
+                mem2 = new uint[itemnames.Count+1];
+                if (!ReadProcessMemory(handle, starttbl+8, mem2,sz, ref br)) continue;
+
+                MainClass = start + i;
+                Debug.Print("Main class at: {0:x}", start + i);
+
+                
+                Debug.Print("Table at: {0:x}", starttbl);
+                itemEntries = new List<ItemEntry>();
+                ItemEntry.reset();
+                for (int x = 0; x < itemnames.Count; x++)
+                {
+                    ItemEntry ie = new ItemEntry(mem2[x] & 0xFFFFFFF8);
+                    if (x == 0) max = ie.max;
+                    itemEntries.Add(ie);
+                }
+
+                mem2 = new uint[1];
+                if (!ReadProcessMemory(handle, MainClass+0x88, mem2, 4, ref br)) continue;
+                
+                if (!ReadProcessMemory(handle, mem2[0] + 0x1b0, mem2, 4, ref br)) continue;
+
+                if (!ReadProcessMemory(handle, mem2[0] + 0x68, mem2, 4, ref br)) continue;
+                
+                if (!ReadProcessMemory(handle, mem2[0] + 0x54, mem2, 4, ref br)) continue;
+
+                uint[] mem3 = new uint[4];
+
+                if (!ReadProcessMemory(handle, mem2[0] + 0x10, mem3, 0x10, ref br)) continue;
+
+                uint cnt = mem3[0];
+                BuildingsPointer = mem3[3];
+
+                mem2 = new uint[cnt];
+                if (!ReadProcessMemory(handle, BuildingsPointer, mem2, cnt*4, ref br)) continue;
+
+                buildingEntries = new List<BuildingEntry>();
+                Buildings = new Dictionary<String,uint>();
+
+                for (int x = 0; x < cnt; x++)
+                {
+                    Debug.Print("Building at: {0:x}", mem2[x] & 0xFFFFFFF8);
+                    BuildingEntry BE = new BuildingEntry(mem2[x] & 0xFFFFFFF8);
+                    Debug.Print(BE.Name);
+                    if (!Buildings.ContainsKey(BE.Name))
+                        Buildings.Add(BE.Name, 1);
+                    else
+                        Buildings[BE.Name]++;
+                    buildingEntries.Add(BE);
+                }
+
+                foreach (String name in Buildings.Keys)
+                    lst_buildings.Items.Add(name+" : "+Buildings[name]);
+                Debug.Print("Building array at: {0:x}", BuildingsPointer);
+            }
+            return;
+        }
+        private void findResources(uint[] mem, uint start, uint size)
+        {
+            Application.DoEvents();
+
+            uint i = 0;
+            uint v;
+            uint w;
 
             for (i = 0; i < size - 0x54; i += 4)
             {
-                do
-                {
-                    v = mem[(i) / 4];
-                    if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
-                        break;
+                v = mem[(i) / 4];
+                if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                    continue;
 
-                    uint y = mem[(i + 0x40) / 4];
-                    if (y != 2) break;
+                uint y = mem[(i + 0x40) / 4];
+                if (y != 2)
+                    continue;
 
-                    v = mem[(i + 0x44) / 4];
-                    if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5)) break;
+                v = mem[(i + 0x44) / 4];
+                if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5))
+                    continue;
 
 
-                    w = mem[(i + 0x48) / 4];
-                    if (w > 5000) break;
+                w = mem[(i + 0x48) / 4];
+                if (w > 5000)
+                    continue;
 
-                    v = mem[(i + 0x54) / 4];
-                    if (((v == 5) || (v == 25)) && (!trees)) break;
+                v = mem[(i + 0x54) / 4];
+                if (((v == 5) || (v == 25)) && (!trees))
+                    continue;
 
-                    if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
-                        if (v == w) break;
+                if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
+                    if (v == w)
+                        continue;
 
-                    resourceEntries.Add(new ResourceEntry(start + i + 0x40));
-                    Debug.Print("Step2 ...");
-                }
-                while (false);
+
+                resourceEntries.Add(new ResourceEntry(start + i + 0x40));
             }
             return;
         }
-
-
-
-        private void findItems(IntPtr handle, uint start, uint size)
-        {
-            Application.DoEvents();
-            if (size > maxmemsize) return;
-
-            UInt32 br = 0;
-            uint i = 0;
-            uint starti = 0;
-            uint v;
-            uint w;
-
-            if (size > maxsearchoffset)
-                size = maxsearchoffset;
-
-            uint[] mem = new uint[size / 4];
-            uint[] mem2 = new uint[0x14 / 4];
-            if (!ReadProcessMemory(handle, (IntPtr)start, mem, size, ref br))
-                if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
-                    size = br;
-                else
-                {
-                    Debug.Print("Last error:{0:x}", GetLastError());
-                    return;
-                }
-
-            if (size == 0) return;
-            for (i = 0; i < size - 0x20; i += 4)
-            {
-
-                starti = i;
-
-                w = mem[i / 4];
-
-                if ((w < (uint)npswf.BaseAddress) || (w > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize))) continue;
-
-                w = mem[(i + 0x04) / 4];
-                if ((w & 0xFF) != 3) continue;
-
-                vartype = mem[(i + 0x0C) / 4];
-                if (vartype == 0) continue;
-
-                v = mem[(i + 0x10) / 4];
-
-                w = mem[(i + 0x14) / 4];
-
-                if (v == 0) continue;
-                if (v > maxstorage) continue;
-                if (v % 100 != 0) continue;
-                if (w > v) continue;
-                max = v;
-
-                if (max == 100) continue;
-
-                Debug.Print("{0:x} {1:x} {2} {3}", start + i, vartype, v, w);
-
-                itemEntries.Add(new ItemEntry(start + i));
-            }
-            return;
-        }
-
 
         #endregion
 
@@ -224,68 +252,6 @@ namespace DSO_Economic
             myPane.Fill = new Fill(Color.White, Color.FromArgb(220, 220, 255), 45F);
             zgc.AxisChange();
         }
-        public void AutoFix(IntPtr handle)
-        {
-            Debug.Print("AutoFix ...");
-            MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
-            long address = 0;
-            uint MaxAddress = 0x7fffffff;
-            uint[] mem = new uint[1];
-
-
-            uint br = 0;
-            do
-            {
-                bool result = VirtualQueryEx(handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
-                if (!result) break;
-                if (m.AllocationBase == 0)
-                {
-                    address = (long)(m.BaseAddress + m.RegionSize);
-                    continue;
-                }
-
-                Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
-                uint[] mem2 = new uint[m.RegionSize / 4];
-                ReadProcessMemory(handle, (IntPtr)m.BaseAddress, mem2, (uint)m.RegionSize, ref br);
-
-                for (int y = 0; y < itemEntries.Count - 2; y++)
-                {
-                    long off1 = itemEntries[y].memoffset;
-                    long off2 = itemEntries[y+1].memoffset;
-
-                    for (uint i = 0; i < m.RegionSize - 8; i += 4)
-                    {
-                        if ((mem2[i / 4] & 0xFFFFFFF8) == (off1 & 0xFFFFFFF8))
-                            if ((mem2[i / 4+1] & 0xFFFFFFF8) == (off2 & 0xFFFFFFF8))
-                        {
-                            while (mem2[i / 4] != 0)
-                                i -= 4;
-                            i += 12;
-
-                            if (!ReadProcessMemory(handle, (IntPtr)(mem2[i / 4] & 0xFFFFFFF8), mem, 4, ref br)) continue;
-
-                            if ((mem[0] < (uint)npswf.BaseAddress) || (mem[0] > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
-                                continue;
-
-                            Debug.Print("Table at: {0:x}", m.BaseAddress + i);
-                            itemEntries = new List<ItemEntry>();
-                            ItemEntry.reset();
-                            for (int x = 0; x < itemnames.Count; x++)
-                            {
-                                ItemEntry ie = new ItemEntry(mem2[(uint)(i + x * 4) / 4] & 0xFFFFFFF8);
-                                if (x == 0) max = ie.max;
-                                itemEntries.Add(ie);
-                            }
-                            Debug.Print("Autofixed ...");
-                            return;
-                        }
-                    }
-                }
-                address = (long)(m.BaseAddress + m.RegionSize);
-            } while (address <= MaxAddress);
-            Debug.Print("Autofix not possible ...");
-        }
-
         private void DSOEForm_Load(object sender, EventArgs e)
         {
             #region init
@@ -459,6 +425,8 @@ namespace DSO_Economic
 
                     if (npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
 
+                    uint size;
+                    uint br = 0;
                     MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
                     do
                     {
@@ -471,8 +439,34 @@ namespace DSO_Economic
                         }
 
                         Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
-                        findItems(p.Handle, (uint)m.BaseAddress, (uint)m.RegionSize);
-                        findResources(p.Handle, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
+                        size = (uint)m.RegionSize;
+                        if (size > maxmemsize)
+                        {
+                            address = (long)(m.BaseAddress + m.RegionSize);
+                            continue;
+                        }
+                        uint[] mem = new uint[size / 4];
+                        if (!ReadProcessMemory(p.Handle, (IntPtr)m.BaseAddress, mem, size, ref br))
+                        {
+                            if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
+                                size = br;
+                            else
+                            {
+                                Debug.Print("Last error:{0:x}", GetLastError());
+                                address = (long)(m.BaseAddress + m.RegionSize);
+                                continue;
+                            }
+                        }
+                        if (size == 0)
+                        {
+                            address = (long)(m.BaseAddress + m.RegionSize);
+                            continue;
+                        }
+
+                        findMainClass(p.Handle,mem, (uint)m.BaseAddress, (uint)m.RegionSize);
+
+                        //findItems(mem,(uint)m.BaseAddress, (uint)m.RegionSize);
+                        findResources(mem, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
 
                         address = (long)(m.BaseAddress + m.RegionSize);
 
@@ -486,9 +480,6 @@ namespace DSO_Economic
 
             if ((Main != null) && (itemEntries.Count > 0))
             {
-                //                if (itemEntries.Count > itemnames.Count)
-                AutoFix(Main.Handle);
-
                 resources.DataSource = resourceEntries;
                 resources.DisplayMember = "Text";
                 resources.ValueMember = "ID";
@@ -540,7 +531,26 @@ namespace DSO_Economic
             public int Type;
         }
 
+        public class BuildingEntry
+        {
+            private long memoffset;
+            public string Name;
+            public BuildingEntry(uint offset)
+            {
+                this.memoffset = offset;
 
+                uint br = 0;
+                uint[] mem2 = new uint[4];
+                
+                if (!ReadProcessMemory(Main.Handle, offset+0x9C, mem2, 4, ref br)) return;
+                
+                if (!ReadProcessMemory(Main.Handle, mem2[0] + 0x08, mem2, 4*3, ref br)) return;
+                
+                byte[] mem = new byte[mem2[2]];
+                if (!ReadProcessMemory(Main.Handle, mem2[0], mem, mem2[2], ref br)) return;
+                Name = Encoding.UTF8.GetString(mem);
+            }
+        }
         public class ItemEntry
         {
             private uint _ID;
@@ -846,11 +856,6 @@ namespace DSO_Economic
                 liv.SubItems[2].Text = getTimeLeftFull(i++);
             }
             DbConnection2.Close();
-        }
-
-        private void tabCtrl_TabIndexChanged(object sender, EventArgs e)
-        {
-
         }
 
         private void tabCtrl_Selected(object sender, TabControlEventArgs e)
