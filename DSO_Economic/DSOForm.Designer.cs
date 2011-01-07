@@ -43,11 +43,14 @@
             this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.btn_export = new System.Windows.Forms.Button();
             this.lst_production = new System.Windows.Forms.ListView();
             this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader5 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader6 = new System.Windows.Forms.ColumnHeader();
             this.lst_buildings = new System.Windows.Forms.ListBox();
             this.TimeLeft = new System.Windows.Forms.Timer(this.components);
+            this.columnHeader7 = new System.Windows.Forms.ColumnHeader();
             this.tabCtrl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -189,6 +192,7 @@
             // 
             // tabPage3
             // 
+            this.tabPage3.Controls.Add(this.btn_export);
             this.tabPage3.Controls.Add(this.lst_production);
             this.tabPage3.Controls.Add(this.lst_buildings);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
@@ -198,11 +202,23 @@
             this.tabPage3.Text = "Gebäude";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // btn_export
+            // 
+            this.btn_export.Location = new System.Drawing.Point(10, 520);
+            this.btn_export.Name = "btn_export";
+            this.btn_export.Size = new System.Drawing.Size(186, 23);
+            this.btn_export.TabIndex = 6;
+            this.btn_export.Text = "Als CSV exportieren";
+            this.btn_export.UseVisualStyleBackColor = true;
+            this.btn_export.Click += new System.EventHandler(this.btn_export_Click);
+            // 
             // lst_production
             // 
             this.lst_production.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader4,
-            this.columnHeader5});
+            this.columnHeader5,
+            this.columnHeader6,
+            this.columnHeader7});
             this.lst_production.Location = new System.Drawing.Point(202, 3);
             this.lst_production.Name = "lst_production";
             this.lst_production.Size = new System.Drawing.Size(540, 546);
@@ -220,12 +236,17 @@
             this.columnHeader5.Text = "Produktionszeit";
             this.columnHeader5.Width = 130;
             // 
+            // columnHeader6
+            // 
+            this.columnHeader6.Text = "Level";
+            this.columnHeader6.Width = 40;
+            // 
             // lst_buildings
             // 
             this.lst_buildings.FormattingEnabled = true;
             this.lst_buildings.Location = new System.Drawing.Point(7, 3);
             this.lst_buildings.Name = "lst_buildings";
-            this.lst_buildings.Size = new System.Drawing.Size(186, 550);
+            this.lst_buildings.Size = new System.Drawing.Size(186, 511);
             this.lst_buildings.TabIndex = 0;
             this.lst_buildings.SelectedIndexChanged += new System.EventHandler(this.lst_buildings_SelectedIndexChanged);
             // 
@@ -233,6 +254,10 @@
             // 
             this.TimeLeft.Interval = 5000;
             this.TimeLeft.Tick += new System.EventHandler(this.TimeLeft_Tick);
+            // 
+            // columnHeader7
+            // 
+            this.columnHeader7.Text = "Aktiv";
             // 
             // DSOEForm
             // 
@@ -272,6 +297,9 @@
         private System.Windows.Forms.ListView lst_production;
         private System.Windows.Forms.ColumnHeader columnHeader4;
         private System.Windows.Forms.ColumnHeader columnHeader5;
+        private System.Windows.Forms.ColumnHeader columnHeader6;
+        private System.Windows.Forms.Button btn_export;
+        private System.Windows.Forms.ColumnHeader columnHeader7;
     }
 }
 

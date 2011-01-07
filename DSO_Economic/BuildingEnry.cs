@@ -11,6 +11,33 @@ namespace DSO_Economic
         public uint memoffset;
         private uint RCoffset;
         public string Name;
+        public uint level
+        {
+            get
+            {
+                uint br = 0;
+                uint[] mem = new uint[1];
+
+                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x78, mem, 4, ref br)) return 0;
+
+                return mem[0];
+            }
+        }
+        public bool isActive
+        {
+            get
+            {
+                uint br = 0;
+                uint[] mem = new uint[1];
+
+                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x70, mem, 4, ref br)) return false;
+
+                if (mem[0] == 1)
+                    return true;
+                else
+                    return false;
+            }
+        }
         public double sPTime
         {
             get

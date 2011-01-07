@@ -76,7 +76,11 @@ namespace DSO_Economic
             try
             {
                 OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();
-                DbCommand.CommandText = "INSERT INTO History" + Global.tblext + " (ID,[DateTime],Amount) VALUES (" + ID + ",CDate('" + DateTime.Now + "')," + amount + ")";
+                //DbCommand.CommandText = "INSERT INTO History" + Global.tblext + " (ID,[DateTime],Amount) VALUES (" + ID + ",CDate('" + DateTime.Now + "')," + amount + ")";
+                DbCommand.CommandText = "INSERT INTO History" + Global.tblext + " (ID,[DateTime],Amount) VALUES (?,?,?)";
+                DbCommand.Parameters.Add("ID", OdbcType.Int).Value = ID;
+                DbCommand.Parameters.Add("CurrentDate", OdbcType.DateTime).Value = DateTime.Now;
+                DbCommand.Parameters.Add("Amount", OdbcType.Int).Value = amount;
                 DbCommand.ExecuteNonQuery();
             }
             catch (Exception e)

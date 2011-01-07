@@ -2,6 +2,7 @@
 using System.Data.Odbc;
 using System.Data.ProviderBase;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -29,6 +30,7 @@ namespace DSO_Economic
 
         private static bool usecustomdb = false;
         private static bool usetxt = false;
+        private static bool usesqlite = false;
         private static bool trees = true;
         private static uint maxmemsize = 0x300000;
         private static uint maxsearchoffset = 0x1E0000;
@@ -243,6 +245,10 @@ namespace DSO_Economic
                 {
                     usecustomdb = true;
                 }
+                if (arg == "/usesqlite")
+                {
+                    usesqlite = true;
+                }
                 if ((arg == "/usetxt") || (usetxt))
                 {
                     usetxt = true;
@@ -342,12 +348,20 @@ namespace DSO_Economic
             Loading LDForm = new Loading();
             LDForm.Show();
 
+            if (usesqlite)
+            {
+                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
+                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
+                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
+            }
+            else
             if (usecustomdb)
             {
                 Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
                 Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
                 Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
             }
+            else
             if (!usetxt)
             {
                 Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
@@ -390,6 +404,11 @@ namespace DSO_Economic
                     foreach (ProcessModule mo in moc)
                     {
                         if (mo.ModuleName.ToUpper() == "NPSWF32.DLL") //wird vom Firefox geladen
+                        {
+                            npswf = mo;
+                            break;
+                        }
+                        if (mo.ModuleName.ToUpper() == "NPSWF64.DLL") //wird vom Firefox geladen
                         {
                             npswf = mo;
                             break;
@@ -514,7 +533,11 @@ namespace DSO_Economic
             {
                 Global.DbConnection2.Open();
                 OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
-                DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>CDate('" + DateTime.Now.AddDays(-1) + "') ORDER BY [DateTime] ASC";
+                //DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>CDate('" + DateTime.Now.AddDays(-1) + "') ORDER BY [DateTime] ASC";
+                DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC";
+                DbCommand.Parameters.Add("ID",OdbcType.Int).Value = items.SelectedIndex;
+                DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddDays(-1);
+
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
                 PointPairList list = new PointPairList();
@@ -539,8 +562,19 @@ namespace DSO_Economic
             //TODO: genauere Berechnung mittels Korrelationsgerade
             try
             {
+                string limit1 = "";
+                string limit2 = "";
+                if (usesqlite)
+                    limit2 = " LIMIT 1 ";
+                else
+                    limit1 = " TOP 1 ";
+
                 OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
-                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                DbCommand.CommandText = "SELECT "+limit1+" [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC"+limit2;
+                DbCommand.Parameters.Add("ID",OdbcType.Int).Value=ID;
+                DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddMinutes(-10);
+
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
                 if (DbReader.Read())
@@ -582,7 +616,17 @@ namespace DSO_Economic
             {
                 OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
                 //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
-                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                string limit1 = "";
+                string limit2 = "";
+                if (usesqlite)
+                    limit2 = " LIMIT 1 ";
+                else
+                    limit1 = " TOP 1 ";
+                DbCommand.CommandText = "SELECT "+limit1+" [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC"+limit2;
+                DbCommand.Parameters.Add("ID", OdbcType.Int).Value = ID;
+                DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddMinutes(-10);
+                
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
                 if (DbReader.Read())
@@ -664,22 +708,62 @@ namespace DSO_Economic
                     i++;
                     lst_production.Items.Add(lve);
                     if (b == null) continue;
-                    if (b.ePTime == -1) return;
-                    if (b.sPTime == -1) return;
+                    if ((b.ePTime != -1) && (b.sPTime != -1))
+                    {
+                        double ticks = b.ePTime - b.sPTime;
+                        Debug.Print(b.Name);
+                        Debug.Print("{0:x}", b.memoffset);
+                        Debug.Print("{0}", DateTime.Now.Ticks);
+                        Debug.Print("{0}", ticks);
+                        Debug.Print("{0}", b.ePTime);
+                        Debug.Print("{0}", b.sPTime);
+                        Debug.Print("{0}", DateTime.Now.Ticks / b.ePTime);
+                        Debug.Print("{0}", DateTime.Now.Ticks / b.sPTime);
+                        Debug.Print("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60);
 
-                    double ticks = b.ePTime - b.sPTime;
-                    Debug.Print(b.Name);
-                    Debug.Print("{0:x}", b.memoffset);
-                    Debug.Print("{0}", DateTime.Now.Ticks);
-                    Debug.Print("{0}", ticks);
-                    Debug.Print("{0}", b.ePTime);
-                    Debug.Print("{0}", b.sPTime);
-                    Debug.Print("{0}", DateTime.Now.Ticks / b.ePTime);
-                    Debug.Print("{0}", DateTime.Now.Ticks / b.sPTime);
-                    Debug.Print("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60);
-                    lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60));
+                        lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60));
+                    }
+                    else
+                        lve.SubItems.Add("");
+                    lve.SubItems.Add(b.level.ToString());
+                    if (b.isActive)
+                        lve.SubItems.Add("ja");
+                    else
+                        lve.SubItems.Add("nein");
                 }
         }
+
+        private void btn_export_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+            StreamWriter s;
+
+            sfd.DefaultExt = ".txt";
+            sfd.Filter = "Textdatei (*.txt)|";
+            sfd.RestoreDirectory = true;
+            if (sfd.ShowDialog() == DialogResult.OK)
+            {
+                if ((s = new StreamWriter(sfd.OpenFile())) != null)
+                {
+                    s.WriteLine("Name,PTime,Level,Active");
+                    foreach (BuildingEntry b in buildingEntries)
+                    {
+                        double ticks = b.ePTime - b.sPTime;
+                        if ((b.ePTime == -1) || (b.sPTime == -1))
+                            ticks = 0;
+                        string a;
+                        if (b.isActive)
+                            a = "1";
+                        else
+                            a = "0";
+                        s.WriteLine(b.Name+","+(ticks/1000)+","+b.level+","+a);
+                    }
+                    s.Close();
+                }
+            }
+
+        }
+
     }
     public class NameValue
     {
