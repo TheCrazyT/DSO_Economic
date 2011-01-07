@@ -5,12 +5,26 @@ using System.Diagnostics;
 
 namespace DSO_Economic
 {
-    public class ResourceEntry
+    public class ResourceEntry : IComparable
     {
         private long memoffset;
         public long amount;
         private uint _ID;
-        private static uint lastresourceEntriesID=0;
+        private static uint lastresourceEntriesID = 0;
+        public static IComparer<ResourceEntry> SortByAmount
+        {
+            get
+            {
+                return ((IComparer<ResourceEntry>)new SortByAmountClass());
+            }
+        }
+        class SortByAmountClass : IComparer<ResourceEntry>
+        {
+            public int Compare(ResourceEntry a, ResourceEntry b)
+            {
+                return a.CompareTo(b);
+            }
+        }
         public uint ID
         {
             get
@@ -24,6 +38,10 @@ namespace DSO_Economic
             lastresourceEntriesID++;
             this.amount = 0;
             this.memoffset = offset;
+        }
+        public int CompareTo(object obj)
+        {
+            return ((ResourceEntry)obj).amount.CompareTo(amount);
         }
         public string Text
         {
@@ -57,6 +75,9 @@ namespace DSO_Economic
                             case 700:
                             case 680:
                                 name = "Fisch";
+                                break;
+                            case 250:
+                                name = "Wild";
                                 break;
                             case 400:
                                 name = "Eisen";

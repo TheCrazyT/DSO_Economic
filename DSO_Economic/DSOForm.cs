@@ -203,11 +203,12 @@ namespace DSO_Economic
             items.BindingContext[itemEntries].ResumeBinding();
             items.SelectedIndex = idx;
 
-            idx = resources.SelectedIndex;
+
+            resourceEntries.Sort(ResourceEntry.SortByAmount);
+            object idx2 = resources.SelectedItem;
             resources.BindingContext[resourceEntries].SuspendBinding();
             resources.BindingContext[resourceEntries].ResumeBinding();
-            resources.SelectedIndex = idx;
-
+            resources.SelectedItem = idx2;
         }
 
         private void CreateGraph(ZedGraphControl zgc, string title, PointPairList ppl)
@@ -340,6 +341,7 @@ namespace DSO_Economic
             }
             #endregion
 
+            
             uint MaxAddress = 0x7fffffff;
             long address = 0;
             bool result;
@@ -519,8 +521,8 @@ namespace DSO_Economic
 
         private void ItemRefresh_Tick(object sender, EventArgs e)
         {
-            Global.DbConnection3.Open();
             refreshItemList();
+            Global.DbConnection3.Open();
             foreach (ItemEntry i in itemEntries)
                 i.save();
             Global.DbConnection3.Close();

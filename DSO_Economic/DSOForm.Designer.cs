@@ -48,9 +48,9 @@
             this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader5 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader6 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader7 = new System.Windows.Forms.ColumnHeader();
             this.lst_buildings = new System.Windows.Forms.ListBox();
             this.TimeLeft = new System.Windows.Forms.Timer(this.components);
-            this.columnHeader7 = new System.Windows.Forms.ColumnHeader();
             this.tabCtrl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -241,6 +241,10 @@
             this.columnHeader6.Text = "Level";
             this.columnHeader6.Width = 40;
             // 
+            // columnHeader7
+            // 
+            this.columnHeader7.Text = "Aktiv";
+            // 
             // lst_buildings
             // 
             this.lst_buildings.FormattingEnabled = true;
@@ -254,10 +258,6 @@
             // 
             this.TimeLeft.Interval = 5000;
             this.TimeLeft.Tick += new System.EventHandler(this.TimeLeft_Tick);
-            // 
-            // columnHeader7
-            // 
-            this.columnHeader7.Text = "Aktiv";
             // 
             // DSOEForm
             // 
