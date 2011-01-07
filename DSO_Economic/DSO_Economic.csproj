@@ -48,12 +48,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuildingEnry.cs" />
     <Compile Include="DSOForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="DSOForm.Designer.cs">
       <DependentUpon>DSOForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Global.cs" />
+    <Compile Include="ItemEntry.cs" />
     <Compile Include="Loading.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -90,6 +93,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="ResourceEntry.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Data.accdb">

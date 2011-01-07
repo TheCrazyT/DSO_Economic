@@ -42,9 +42,12 @@
             this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
-            this.TimeLeft = new System.Windows.Forms.Timer(this.components);
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.lst_production = new System.Windows.Forms.ListView();
+            this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader5 = new System.Windows.Forms.ColumnHeader();
             this.lst_buildings = new System.Windows.Forms.ListBox();
+            this.TimeLeft = new System.Windows.Forms.Timer(this.components);
             this.tabCtrl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -184,13 +187,9 @@
             this.columnHeader3.Text = "Zeit bis Lager voll";
             this.columnHeader3.Width = 160;
             // 
-            // TimeLeft
-            // 
-            this.TimeLeft.Interval = 5000;
-            this.TimeLeft.Tick += new System.EventHandler(this.TimeLeft_Tick);
-            // 
             // tabPage3
             // 
+            this.tabPage3.Controls.Add(this.lst_production);
             this.tabPage3.Controls.Add(this.lst_buildings);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
@@ -199,6 +198,28 @@
             this.tabPage3.Text = "Gebäude";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // lst_production
+            // 
+            this.lst_production.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader4,
+            this.columnHeader5});
+            this.lst_production.Location = new System.Drawing.Point(202, 3);
+            this.lst_production.Name = "lst_production";
+            this.lst_production.Size = new System.Drawing.Size(540, 546);
+            this.lst_production.TabIndex = 5;
+            this.lst_production.UseCompatibleStateImageBehavior = false;
+            this.lst_production.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader4
+            // 
+            this.columnHeader4.Text = "Name";
+            this.columnHeader4.Width = 130;
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Produktionszeit";
+            this.columnHeader5.Width = 130;
+            // 
             // lst_buildings
             // 
             this.lst_buildings.FormattingEnabled = true;
@@ -206,6 +227,12 @@
             this.lst_buildings.Name = "lst_buildings";
             this.lst_buildings.Size = new System.Drawing.Size(186, 550);
             this.lst_buildings.TabIndex = 0;
+            this.lst_buildings.SelectedIndexChanged += new System.EventHandler(this.lst_buildings_SelectedIndexChanged);
+            // 
+            // TimeLeft
+            // 
+            this.TimeLeft.Interval = 5000;
+            this.TimeLeft.Tick += new System.EventHandler(this.TimeLeft_Tick);
             // 
             // DSOEForm
             // 
@@ -242,6 +269,9 @@
         private System.Windows.Forms.ColumnHeader columnHeader3;
         private System.Windows.Forms.TabPage tabPage3;
         private System.Windows.Forms.ListBox lst_buildings;
+        private System.Windows.Forms.ListView lst_production;
+        private System.Windows.Forms.ColumnHeader columnHeader4;
+        private System.Windows.Forms.ColumnHeader columnHeader5;
     }
 }
 

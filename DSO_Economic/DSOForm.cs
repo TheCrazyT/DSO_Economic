@@ -11,27 +11,21 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using ZedGraph;
+
 namespace DSO_Economic
 {
     public partial class DSOEForm : Form
     {
         private static ProcessModule npswf = null;
-        private static Process Main = null;
         private static uint MainClass = 0;
         private static long max;
         private static uint vartype;
-        private static uint lastresourceEntriesID = 0;
         private static uint BuildingsPointer = 0;
 
-        private static List<String> itemnames;
         public static List<ItemEntry> itemEntries;
         private static List<ResourceEntry> resourceEntries;
         private static List<BuildingEntry> buildingEntries;
         private static Dictionary<String,uint> Buildings;
-        private static OdbcConnection DbConnection;
-        private static OdbcConnection DbConnection2;
-        private static OdbcConnection DbConnection3;
-
 
         private static bool usecustomdb = false;
         private static bool usetxt = false;
@@ -40,28 +34,6 @@ namespace DSO_Economic
         private static uint maxsearchoffset = 0x1E0000;
         private static uint maxstorage = 6000;
         private static uint maxmatch1rounds = 10;
-
-
-        private static string tblext = "";
-
-
-        [DllImport("Kernel32.dll")]
-        static extern bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
-
-        [DllImport("Kernel32.dll")]
-        static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
-
-        [DllImport("Kernel32.dll")]
-        static extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
-
-        [DllImport("Kernel32.dll")]
-        static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
-
-        [DllImport("Kernel32.dll")]
-        static extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
-
-        [DllImport("Kernel32.dll")]
-        static extern uint GetLastError();
 
 
         public DSOEForm()
@@ -104,7 +76,7 @@ namespace DSO_Economic
 
                 uint br = 0;
                 uint[] mem2 = new uint[4];
-                if (!ReadProcessMemory(handle, w, mem2, 4*4, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, w, mem2, 4*4, ref br)) continue;
 
                 if (mem2[0] != 44) continue;
                 if (mem2[1] != 46) continue;
@@ -113,9 +85,9 @@ namespace DSO_Economic
                 if ((starttbl > (uint)npswf.BaseAddress) && (starttbl < (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                     continue;
 
-                uint sz=(uint)(4 * itemnames.Count);
-                mem2 = new uint[itemnames.Count+1];
-                if (!ReadProcessMemory(handle, starttbl+8, mem2,sz, ref br)) continue;
+                uint sz=(uint)(4 * Global.itemnames.Count);
+                mem2 = new uint[Global.itemnames.Count + 1];
+                if (!Global.ReadProcessMemory(handle, starttbl + 8, mem2, sz, ref br)) continue;
 
                 MainClass = start + i;
                 Debug.Print("Main class at: {0:x}", start + i);
@@ -124,7 +96,7 @@ namespace DSO_Economic
                 Debug.Print("Table at: {0:x}", starttbl);
                 itemEntries = new List<ItemEntry>();
                 ItemEntry.reset();
-                for (int x = 0; x < itemnames.Count; x++)
+                for (int x = 0; x < Global.itemnames.Count; x++)
                 {
                     ItemEntry ie = new ItemEntry(mem2[x] & 0xFFFFFFF8);
                     if (x == 0) max = ie.max;
@@ -132,23 +104,23 @@ namespace DSO_Economic
                 }
 
                 mem2 = new uint[1];
-                if (!ReadProcessMemory(handle, MainClass+0x88, mem2, 4, ref br)) continue;
-                
-                if (!ReadProcessMemory(handle, mem2[0] + 0x1b0, mem2, 4, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, MainClass + 0x88, mem2, 4, ref br)) continue;
 
-                if (!ReadProcessMemory(handle, mem2[0] + 0x68, mem2, 4, ref br)) continue;
-                
-                if (!ReadProcessMemory(handle, mem2[0] + 0x54, mem2, 4, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x1b0, mem2, 4, ref br)) continue;
+
+                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x68, mem2, 4, ref br)) continue;
+
+                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x54, mem2, 4, ref br)) continue;
 
                 uint[] mem3 = new uint[4];
 
-                if (!ReadProcessMemory(handle, mem2[0] + 0x10, mem3, 0x10, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x10, mem3, 0x10, ref br)) continue;
 
                 uint cnt = mem3[0];
                 BuildingsPointer = mem3[3];
 
                 mem2 = new uint[cnt];
-                if (!ReadProcessMemory(handle, BuildingsPointer, mem2, cnt*4, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, BuildingsPointer, mem2, cnt * 4, ref br)) continue;
 
                 buildingEntries = new List<BuildingEntry>();
                 Buildings = new Dictionary<String,uint>();
@@ -165,8 +137,14 @@ namespace DSO_Economic
                     buildingEntries.Add(BE);
                 }
 
+                lst_buildings.DisplayMember = "Name";
+                lst_buildings.ValueMember = "Value";
+
                 foreach (String name in Buildings.Keys)
-                    lst_buildings.Items.Add(name+" : "+Buildings[name]);
+                {
+                    NameValue NV = new NameValue(name + " : " + Buildings[name],name);
+                    lst_buildings.Items.Add(NV);
+                }
                 Debug.Print("Building array at: {0:x}", BuildingsPointer);
             }
             return;
@@ -268,7 +246,7 @@ namespace DSO_Economic
                 if ((arg == "/usetxt") || (usetxt))
                 {
                     usetxt = true;
-                    tblext = ".txt";
+                    Global.tblext = ".txt";
                 }
                 if (arg == "/timer")
                 {
@@ -366,36 +344,36 @@ namespace DSO_Economic
 
             if (usecustomdb)
             {
-                DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-                DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-                DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
             }
             if (!usetxt)
             {
-                DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-                DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-                DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
             }
             else
             {
-                DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-                DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-                DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
             }
 
-            DbConnection.Open();
-            OdbcCommand DbCommand = DbConnection.CreateCommand();
+            Global.DbConnection.Open();
+            OdbcCommand DbCommand = Global.DbConnection.CreateCommand();
             OdbcDataReader DbReader;
-            DbCommand.CommandText = "SELECT Name FROM items" + tblext + " ORDER BY ID ASC";
+            DbCommand.CommandText = "SELECT Name FROM items" + Global.tblext + " ORDER BY ID ASC";
             DbReader = DbCommand.ExecuteReader();
 
-            itemnames = new List<string>();
+            Global.itemnames = new List<string>();
             while (DbReader.Read())
             {
-                itemnames.Add(DbReader.GetString(0));
+                Global.itemnames.Add(DbReader.GetString(0));
             }
             DbReader.Close();
-            DbConnection.Close();
+            Global.DbConnection.Close();
 
 
             itemEntries = new List<ItemEntry>();
@@ -406,7 +384,7 @@ namespace DSO_Economic
                 Process[] pList = Process.GetProcessesByName(pname);
                 foreach (Process p in pList)
                 {
-                    Main = p;
+                    Global.Main = p;
 
                     ProcessModuleCollection moc = p.Modules;
                     foreach (ProcessModule mo in moc)
@@ -430,7 +408,7 @@ namespace DSO_Economic
                     MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
                     do
                     {
-                        result = VirtualQueryEx(p.Handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
+                        result = Global.VirtualQueryEx(p.Handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
                         if (!result) break; //am ende angekommen ... wir können aufhören
                         if (m.AllocationBase == 0)
                         {
@@ -446,13 +424,13 @@ namespace DSO_Economic
                             continue;
                         }
                         uint[] mem = new uint[size / 4];
-                        if (!ReadProcessMemory(p.Handle, (IntPtr)m.BaseAddress, mem, size, ref br))
+                        if (!Global.ReadProcessMemory(p.Handle, (IntPtr)m.BaseAddress, mem, size, ref br))
                         {
-                            if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
+                            if (Global.GetLastError() == 0x12b) //nur einen Teil ausgelesen
                                 size = br;
                             else
                             {
-                                Debug.Print("Last error:{0:x}", GetLastError());
+                                Debug.Print("Last error:{0:x}", Global.GetLastError());
                                 address = (long)(m.BaseAddress + m.RegionSize);
                                 continue;
                             }
@@ -472,13 +450,13 @@ namespace DSO_Economic
 
                     } while (address <= MaxAddress);
 
-                    if ((Main != null) && (itemEntries.Count > 0)) break;
+                    if ((Global.Main != null) && (itemEntries.Count > 0)) break;
                 }
-                if ((Main != null) && (itemEntries.Count > 0)) break;
+                if ((Global.Main != null) && (itemEntries.Count > 0)) break;
             }
             #endregion
 
-            if ((Main != null) && (itemEntries.Count > 0))
+            if ((Global.Main != null) && (itemEntries.Count > 0))
             {
                 resources.DataSource = resourceEntries;
                 resources.DisplayMember = "Text";
@@ -494,7 +472,7 @@ namespace DSO_Economic
             else
             {
                 string errorcode = "";
-                if (Main == null)
+                if (Global.Main == null)
                     errorcode += "1";
                 else
                     errorcode += "0";
@@ -520,220 +498,13 @@ namespace DSO_Economic
             LDForm.Dispose();
         }
 
-        public struct MEMORY_BASIC_INFORMATION
-        {
-            public int BaseAddress;
-            public int AllocationBase;
-            public int AllocationProtect;
-            public int RegionSize;
-            public int State;
-            public int Protect;
-            public int Type;
-        }
-
-        public class BuildingEntry
-        {
-            private long memoffset;
-            public string Name;
-            public BuildingEntry(uint offset)
-            {
-                this.memoffset = offset;
-
-                uint br = 0;
-                uint[] mem2 = new uint[4];
-                
-                if (!ReadProcessMemory(Main.Handle, offset+0x9C, mem2, 4, ref br)) return;
-                
-                if (!ReadProcessMemory(Main.Handle, mem2[0] + 0x08, mem2, 4*3, ref br)) return;
-                
-                byte[] mem = new byte[mem2[2]];
-                if (!ReadProcessMemory(Main.Handle, mem2[0], mem, mem2[2], ref br)) return;
-                Name = Encoding.UTF8.GetString(mem);
-            }
-        }
-        public class ItemEntry
-        {
-            private uint _ID;
-            private static int last_ID = -1;
-            public string Amount
-            {
-                get
-                {
-                    return amount.ToString();
-                }
-            }
-            public uint amount
-            {
-                get
-                {
-                    if (memoffset == 0) return 0;
-                    uint[] mem = new uint[0x20 / 4];
-                    UInt32 br = 0;
-                    ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-                    return mem[0x14 / 4];
-                }
-            }
-            public uint max
-            {
-                get
-                {
-                    if (memoffset == 0) return 0;
-                    uint[] mem = new uint[0x20 / 4];
-                    UInt32 br = 0;
-                    ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-                    return mem[0x10 / 4];
-                }
-            }
-            public uint ID
-            {
-                get
-                {
-                    return _ID;
-                }
-            }
-            private string _Name;
-            public long memoffset;
-            public ItemEntry(long offset)
-            {
-                _ID = (uint)(last_ID + 1);
-                last_ID = (int)_ID;
-                if (_ID < itemnames.Count)
-                    _Name = itemnames[(int)_ID];
-                else
-                    _Name = "";
-                memoffset = offset;
-            }
-            public static void reset()
-            {
-                ItemEntry.last_ID = -1;
-            }
-            public void setID(uint ID)
-            {
-                this._ID = ID;
-                if (_ID < itemnames.Count)
-                    this._Name = itemnames[(int)_ID];
-                else
-                    this._Name = "";
-            }
-            public void save()
-            {
-                try
-                {
-                    OdbcCommand DbCommand = DbConnection3.CreateCommand();
-                    DbCommand.CommandText = "INSERT INTO History" + tblext + " (ID,[DateTime],Amount) VALUES (" + ID + ",CDate('" + DateTime.Now + "')," + amount + ")";
-                    DbCommand.ExecuteNonQuery();
-                }
-                catch (Exception e)
-                {
-                    Debug.Print(e.ToString());
-                }
-
-            }
-            public string Text
-            {
-                get
-                {
-                    UInt32 br = 0;
-                    byte[] mem = new byte[0x20];
-                    if ((Main != null) && (memoffset != 0))
-                    {
-                        ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
-                        return _Name + ": " + amount;
-                    }
-                    Debug.Print("ID:{0} memoffset:{1:x}", ID, memoffset);
-                    return "";
-                }
-            }
-        }
-
-        public class ResourceEntry
-        {
-            private long memoffset;
-            public long amount;
-            private uint _ID;
-            public uint ID
-            {
-                get
-                {
-                    return _ID;
-                }
-            }
-            public ResourceEntry(long offset)
-            {
-                this._ID = lastresourceEntriesID;
-                lastresourceEntriesID++;
-                this.amount = 0;
-                this.memoffset = offset;
-            }
-            public string Text
-            {
-                get
-                {
-                    UInt32 br = 0;
-                    uint[] mem = new uint[0x18 / 4];
-                    if ((Main != null) && (memoffset != 0))
-                    {
-                        ReadProcessMemory(Main.Handle, (IntPtr)(memoffset), mem, 0x18, ref br);
-
-                        if ((int)mem[0] == 2)
-                        {
-                            amount = mem[8 / 4];
-
-                            uint max = mem[0x14 / 4];
-                            string name = "";
-                            switch (max)
-                            {
-                                case 5:
-                                case 25:
-                                    name = "Baum";
-                                    break;
-
-                                case 1000:
-                                    name = "Wasser";
-                                    break;
-                                case 610:
-                                    name = "Stein";
-                                    break;
-                                case 700:
-                                case 680:
-                                    name = "Fisch";
-                                    break;
-                                case 400:
-                                    name = "Eisen";
-                                    break;
-                                case 710:
-                                    name = "Kupfer";
-                                    break;
-                                case 300:
-                                    name = "Marmor";
-                                    break;
-                                case 160:
-                                    name = "Getreide";
-                                    break;
-                                default:
-                                    name = "?" + max;
-                                    break;
-
-                            }
-                            return name + ": " + amount;
-                        }
-                        else
-                            Debug.Print("Invalid ID:{0} memoffset:{1:x}", ID, memoffset);
-                    }
-                    Debug.Print("ID:{0} memoffset:{1:x}", ID, memoffset);
-                    return "";
-                }
-            }
-        }
-
-
         private void ItemRefresh_Tick(object sender, EventArgs e)
         {
-            DbConnection3.Open();
+            Global.DbConnection3.Open();
             refreshItemList();
             foreach (ItemEntry i in itemEntries)
                 i.save();
-            DbConnection3.Close();
+            Global.DbConnection3.Close();
         }
 
         private void items_SelectedValueChanged(object sender, EventArgs e)
@@ -741,9 +512,9 @@ namespace DSO_Economic
             if (items.SelectedIndex == -1) return;
             try
             {
-                DbConnection2.Open();
-                OdbcCommand DbCommand = DbConnection2.CreateCommand();
-                DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>CDate('" + DateTime.Now.AddDays(-1) + "') ORDER BY [DateTime] ASC";
+                Global.DbConnection2.Open();
+                OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
+                DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>CDate('" + DateTime.Now.AddDays(-1) + "') ORDER BY [DateTime] ASC";
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
                 PointPairList list = new PointPairList();
@@ -754,8 +525,8 @@ namespace DSO_Economic
                     list.Add(diff, DbReader.GetInt32(1));
                 }
                 DbReader.Close();
-                DbConnection2.Close();
-                CreateGraph(graph, itemnames[items.SelectedIndex], list);
+                Global.DbConnection2.Close();
+                CreateGraph(graph, Global.itemnames[items.SelectedIndex], list);
                 graph.Refresh();
             }
             catch (Exception er)
@@ -768,8 +539,8 @@ namespace DSO_Economic
             //TODO: genauere Berechnung mittels Korrelationsgerade
             try
             {
-                OdbcCommand DbCommand = DbConnection2.CreateCommand();
-                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
+                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
                 if (DbReader.Read())
@@ -809,9 +580,9 @@ namespace DSO_Economic
             //TODO: genauere Berechnung mittels Korrelationsgerade
             try
             {
-                OdbcCommand DbCommand = DbConnection2.CreateCommand();
+                OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
                 //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
-                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
+                DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
                 if (DbReader.Read())
@@ -848,14 +619,14 @@ namespace DSO_Economic
         }
         private void TimeLeft_Tick(object sender, EventArgs e)
         {
-            DbConnection2.Open();
+            Global.DbConnection2.Open();
             uint i = 0;
             foreach (ListViewItem liv in itemsOverview.Items)
             {
                 liv.SubItems[1].Text = getTimeLeftEmpty(i);
                 liv.SubItems[2].Text = getTimeLeftFull(i++);
             }
-            DbConnection2.Close();
+            Global.DbConnection2.Close();
         }
 
         private void tabCtrl_Selected(object sender, TabControlEventArgs e)
@@ -878,6 +649,50 @@ namespace DSO_Economic
                 itemsOverview.Items.Clear();
                 TimeLeft.Enabled = false;
             }
+        }
+
+        private void lst_buildings_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(lst_buildings.SelectedIndex==-1)return;
+            lst_production.Items.Clear();
+            uint i=0;
+            foreach(BuildingEntry b in buildingEntries)
+                if(b.Name==((NameValue)lst_buildings.SelectedItem).Value)
+                {
+                    ListViewItem lve = new ListViewItem();
+                    lve.Text = b.Name+i.ToString();
+                    i++;
+                    lst_production.Items.Add(lve);
+                    if (b == null) continue;
+                    if (b.ePTime == -1) return;
+                    if (b.sPTime == -1) return;
+
+                    double ticks = b.ePTime - b.sPTime;
+                    Debug.Print(b.Name);
+                    Debug.Print("{0:x}", b.memoffset);
+                    Debug.Print("{0}", DateTime.Now.Ticks);
+                    Debug.Print("{0}", ticks);
+                    Debug.Print("{0}", b.ePTime);
+                    Debug.Print("{0}", b.sPTime);
+                    Debug.Print("{0}", DateTime.Now.Ticks / b.ePTime);
+                    Debug.Print("{0}", DateTime.Now.Ticks / b.sPTime);
+                    Debug.Print("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60);
+                    lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60));
+                }
+        }
+    }
+    public class NameValue
+    {
+        public string Name;
+        public string Value;
+        public NameValue(string Name, string Value)
+        {
+            this.Name = Name;
+            this.Value = Value;
+        }
+        public override string ToString()
+        {
+            return Name;
         }
     }
 }
