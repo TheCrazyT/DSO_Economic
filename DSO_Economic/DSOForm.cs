@@ -17,7 +17,7 @@ namespace DSO_Economic
 {
     public partial class DSOEForm : Form
     {
-        private static ProcessModule npswf = null;
+        private static MyProcessModule npswf = null;
         private static uint MainClass = 0;
         private static long max;
         private static uint vartype;
@@ -34,8 +34,6 @@ namespace DSO_Economic
         private static bool trees = true;
         private static uint maxmemsize = 0x300000;
         private static uint maxsearchoffset = 0x1E0000;
-        private static uint maxstorage = 6000;
-        private static uint maxmatch1rounds = 10;
 
 
         public DSOEForm()
@@ -272,22 +270,6 @@ namespace DSO_Economic
                     }
                 }
 
-                if (arg == "/mm1r")
-                {
-                    if (args.Length > h + 1)
-                    {
-                        try
-                        {
-                            maxmatch1rounds = uint.Parse(args[h + 1]);
-                        }
-                        catch (Exception e2)
-                        {
-                            MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            Application.Exit();
-                            this.Dispose();
-                        }
-                    }
-                }
                 if (arg == "/mms")
                 {
                     if (args.Length > h + 1)
@@ -295,22 +277,6 @@ namespace DSO_Economic
                         try
                         {
                             maxmemsize = uint.Parse(args[h + 1]);
-                        }
-                        catch (Exception e2)
-                        {
-                            MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            Application.Exit();
-                            this.Dispose();
-                        }
-                    }
-                }
-                if (arg == "/ms")
-                {
-                    if (args.Length > h + 1)
-                    {
-                        try
-                        {
-                            maxstorage = uint.Parse(args[h + 1]);
                         }
                         catch (Exception e2)
                         {
@@ -402,15 +368,9 @@ namespace DSO_Economic
                 {
                     Global.Main = p;
 
-                    ProcessModuleCollection moc = p.Modules;
-                    foreach (ProcessModule mo in moc)
+                    foreach (MyProcessModule mo in Global.GetProcessModules(p))
                     {
                         if (mo.ModuleName.ToUpper() == "NPSWF32.DLL") //wird vom Firefox geladen
-                        {
-                            npswf = mo;
-                            break;
-                        }
-                        if (mo.ModuleName.ToUpper() == "NPSWF64.DLL") //wird vom Firefox geladen
                         {
                             npswf = mo;
                             break;
@@ -421,7 +381,6 @@ namespace DSO_Economic
                             break;
                         }
                     }
-
                     if (npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
 
                     uint size;

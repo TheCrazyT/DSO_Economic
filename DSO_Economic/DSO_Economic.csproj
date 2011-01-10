@@ -55,7 +55,8 @@
     <Compile Include="DSOForm.Designer.cs">
       <DependentUpon>DSOForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Global.cs" />
+    <Compile Include="Global.cs">
+    </Compile>
     <Compile Include="ItemEntry.cs" />
     <Compile Include="Loading.cs">
       <SubType>Form</SubType>

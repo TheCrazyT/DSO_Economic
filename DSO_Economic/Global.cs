@@ -8,8 +8,10 @@ using System.Windows.Forms;
 using System.Diagnostics;
 namespace DSO_Economic
 {
+
     static class Global
     {
+        public const uint LIST_MODULES_ALL = 0x03; 
         public static Process Main = null;
         public static List<String> itemnames;
         public static OdbcConnection DbConnection;
@@ -42,6 +44,87 @@ namespace DSO_Economic
         [DllImport("Kernel32.dll")]
         static public extern uint GetLastError();
 
+
+        [DllImport("psapi.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetModuleInformation(
+            [In] IntPtr ProcessHandle,
+            [In] [Optional] IntPtr ModuleHandle,
+            [Out] ModuleInfo ModInfo,
+            [In] int Size
+            );
+
+        
+        [DllImport("psapi.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool EnumProcessModulesEx(
+            [In] IntPtr ProcessHandle,
+            [Out] IntPtr[] ModuleHandles,
+            [In] int Size,
+            [Out] out int RequiredSize,
+            [In] uint dwFilterFlag
+            );
+
+        [DllImport("psapi.dll")]
+        public static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName,
+            [In] [MarshalAs(UnmanagedType.U4)] int nSize);
+
+        //Umstandsweg dank Microsoft
+        public static List<MyProcessModule> GetProcessModules(Process process)
+        {
+            IntPtr processHandle = process.Handle;
+            List<MyProcessModule> modules = new List<MyProcessModule>();
+
+            IntPtr[] modhHandles = new IntPtr[0];
+            int lpcbNeeded = 0;
+
+            try
+            {
+                EnumProcessModulesEx(processHandle, modhHandles, 0, out lpcbNeeded, LIST_MODULES_ALL);
+
+                modhHandles = new IntPtr[lpcbNeeded / IntPtr.Size];
+                EnumProcessModulesEx(processHandle, modhHandles, modhHandles.Length * IntPtr.Size, out lpcbNeeded, LIST_MODULES_ALL);
+            }
+            catch (EntryPointNotFoundException)
+            {
+                foreach (ProcessModule m in process.Modules)
+                {
+                    MyProcessModule modi = new MyProcessModule();
+                    modi.ModuleName = m.ModuleName;
+                    modi.BaseAddress = m.BaseAddress;
+                    modi.ModuleMemorySize = m.ModuleMemorySize;
+                    modules.Add(modi);
+                }
+                return modules;
+            }
+
+            for (int i = 0; i < modhHandles.Length; i++)
+            {
+                ModuleInfo modi=new ModuleInfo();
+                StringBuilder modName = new StringBuilder(256);
+                if (GetModuleFileNameEx(processHandle, modhHandles[i], modName, modName.Capacity) != 0)
+                    if (GetModuleInformation(processHandle, modhHandles[i], modi, System.Runtime.InteropServices.Marshal.SizeOf(modi)))
+                    {
+                        MyProcessModule pm = new MyProcessModule();
+                        pm.ModuleName = modName.ToString();
+                        modules.Add(pm);
+                    }
+            }
+            return modules;
+        }
+    }
+    public class MyProcessModule
+    {
+        public string ModuleName;
+        public IntPtr BaseAddress;
+        public int ModuleMemorySize;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ModuleInfo
+    {
+        public IntPtr BaseOfDll;
+        public int SizeOfImage;
+        public IntPtr EntryPoint;
     }
     public struct MEMORY_BASIC_INFORMATION
     {
