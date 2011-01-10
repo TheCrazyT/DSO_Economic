@@ -89,11 +89,11 @@ namespace DSO_Economic
             {
                 foreach (ProcessModule m in process.Modules)
                 {
-                    MyProcessModule modi = new MyProcessModule();
-                    modi.ModuleName = m.ModuleName;
-                    modi.BaseAddress = m.BaseAddress;
-                    modi.ModuleMemorySize = m.ModuleMemorySize;
-                    modules.Add(modi);
+                    MyProcessModule pm = new MyProcessModule();
+                    pm.ModuleName = m.ModuleName;
+                    pm.BaseAddress = m.BaseAddress;
+                    pm.ModuleMemorySize = m.ModuleMemorySize;
+                    modules.Add(pm);
                 }
                 return modules;
             }
@@ -106,6 +106,8 @@ namespace DSO_Economic
                     if (GetModuleInformation(processHandle, modhHandles[i], modi, System.Runtime.InteropServices.Marshal.SizeOf(modi)))
                     {
                         MyProcessModule pm = new MyProcessModule();
+                        pm.ModuleMemorySize = modi.SizeOfImage;
+                        pm.BaseAddress = modi.BaseOfDll;
                         pm.ModuleName = modName.ToString();
                         modules.Add(pm);
                     }
