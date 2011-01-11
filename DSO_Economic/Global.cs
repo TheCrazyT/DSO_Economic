@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
@@ -49,8 +50,8 @@ namespace DSO_Economic
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetModuleInformation(
             [In] IntPtr ProcessHandle,
-            [In] [Optional] IntPtr ModuleHandle,
-            [Out] ModuleInfo ModInfo,
+            [In] IntPtr ModuleHandle,
+            [Out] out ModuleInfo ModInfo,
             [In] int Size
             );
 
@@ -63,6 +64,15 @@ namespace DSO_Economic
             [In] int Size,
             [Out] out int RequiredSize,
             [In] uint dwFilterFlag
+            );
+        
+        [DllImport("psapi.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool EnumProcessModules(
+            [In] IntPtr ProcessHandle,
+            [Out] IntPtr[] ModuleHandles,
+            [In] int Size,
+            [Out] out int RequiredSize
             );
 
         [DllImport("psapi.dll")]
@@ -84,6 +94,10 @@ namespace DSO_Economic
 
                 modhHandles = new IntPtr[lpcbNeeded / IntPtr.Size];
                 EnumProcessModulesEx(processHandle, modhHandles, modhHandles.Length * IntPtr.Size, out lpcbNeeded, LIST_MODULES_ALL);
+
+                //Zum Test auf 32 Bit System ...
+                //EnumProcessModules(processHandle, modhHandles, 0, out lpcbNeeded);
+                //EnumProcessModules(processHandle, modhHandles, modhHandles.Length * IntPtr.Size, out lpcbNeeded);
             }
             catch (EntryPointNotFoundException)
             {
@@ -103,12 +117,14 @@ namespace DSO_Economic
                 ModuleInfo modi=new ModuleInfo();
                 StringBuilder modName = new StringBuilder(256);
                 if (GetModuleFileNameEx(processHandle, modhHandles[i], modName, modName.Capacity) != 0)
-                    if (GetModuleInformation(processHandle, modhHandles[i], modi, System.Runtime.InteropServices.Marshal.SizeOf(modi)))
+                    if (GetModuleInformation(processHandle, modhHandles[i], out modi, System.Runtime.InteropServices.Marshal.SizeOf(modi)))
                     {
                         MyProcessModule pm = new MyProcessModule();
                         pm.ModuleMemorySize = modi.SizeOfImage;
                         pm.BaseAddress = modi.BaseOfDll;
-                        pm.ModuleName = modName.ToString();
+                        string modFileName = Path.GetFileName(modName.ToString());
+                        Debug.Print(modFileName.ToString());
+                        pm.ModuleName = modFileName.ToString();
                         modules.Add(pm);
                     }
             }
