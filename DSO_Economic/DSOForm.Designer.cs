@@ -51,6 +51,7 @@
             this.columnHeader7 = new System.Windows.Forms.ColumnHeader();
             this.lst_buildings = new System.Windows.Forms.ListBox();
             this.TimeLeft = new System.Windows.Forms.Timer(this.components);
+            this.BuildingRefresh = new System.Windows.Forms.Timer(this.components);
             this.tabCtrl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -259,6 +260,11 @@
             this.TimeLeft.Interval = 5000;
             this.TimeLeft.Tick += new System.EventHandler(this.TimeLeft_Tick);
             // 
+            // BuildingRefresh
+            // 
+            this.BuildingRefresh.Interval = 60000;
+            this.BuildingRefresh.Tick += new System.EventHandler(this.BuildingRefresh_Tick);
+            // 
             // DSOEForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -300,6 +306,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader6;
         private System.Windows.Forms.Button btn_export;
         private System.Windows.Forms.ColumnHeader columnHeader7;
+        private System.Windows.Forms.Timer BuildingRefresh;
     }
 }
 

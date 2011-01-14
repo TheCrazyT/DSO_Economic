@@ -11,6 +11,11 @@ namespace DSO_Economic
         public uint memoffset;
         private uint RCoffset;
         public string Name;
+
+        public double _loadedePTime=0;
+        public double _loadedsPTime = 0;
+        public double _loadedX = 0;
+        public double _loadedY = 0;
         public uint level
         {
             get
@@ -53,6 +58,7 @@ namespace DSO_Economic
                 if (!Global.ReadProcessMemory(Global.Main.Handle, RCoffset + 0x68, mem, 8, ref br)) return 0;
 
                 double result = mem[0];
+                if ((result == -1) || (result == 0)) return _loadedsPTime;
                 return result;
             }
         }
@@ -72,7 +78,32 @@ namespace DSO_Economic
                 if (!Global.ReadProcessMemory(Global.Main.Handle, RCoffset + 0x70, mem, 8, ref br)) return 0;
 
                 double result = mem[0];
+                if ((result == -1) || (result == 0)) return _loadedePTime;
                 return result;
+            }
+        }
+        public double X
+        {
+            get
+            {
+                uint br = 0;
+                double[] mem = new double[1];
+
+                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x20, mem, 8, ref br)) return 0;
+
+                return mem[0];
+            }
+        }
+        public double Y
+        {
+            get
+            {
+                uint br = 0;
+                double[] mem = new double[1];
+
+                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x28, mem, 8, ref br)) return 0;
+
+                return mem[0];
             }
         }
         public BuildingEntry(uint offset)
@@ -95,6 +126,52 @@ namespace DSO_Economic
 
             if (!Global.ReadProcessMemory(Global.Main.Handle, offset + 0xB4, mem2,4, ref br)) return;
             RCoffset = mem2[0];
+            load();
+        }
+        public void load()
+        {
+            OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();
+            DbCommand.CommandText = "SELECT sPTime,ePTime FROM BuildingProductionTimes WHERE X=? AND Y=?";
+            DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
+            DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
+            OdbcDataReader odr=DbCommand.ExecuteReader();
+            if (odr.Read())
+            {
+                this._loadedsPTime = odr.GetDouble(0);
+                this._loadedePTime = odr.GetDouble(1);
+            }
+            else
+            {
+                this._loadedsPTime = -1;
+                this._loadedePTime = -1;
+            }
+        }
+        public void save()
+        {
+            if ((ePTime == 0) || (sPTime == 0)) return;
+            if ((ePTime == -1) || (sPTime == -1)) return;
+            OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();
+            DbCommand.CommandText = "INSERT INTO BuildingProductionTimes (X,Y,sPTime,ePTime) VALUES (?,?,?,?)";
+            DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
+            DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
+            DbCommand.Parameters.Add("sPTime", OdbcType.Double).Value = sPTime;
+            DbCommand.Parameters.Add("ePTime", OdbcType.Double).Value = ePTime;
+            try
+            {
+                DbCommand.ExecuteNonQuery();
+            }
+            catch (OdbcException error)
+            {
+                Debug.Write(error);
+            }
+
+            DbCommand = Global.DbConnection3.CreateCommand();
+            DbCommand.CommandText = "UPDATE BuildingProductionTimes SET sPTime=?,ePTime=? WHERE X=? AND Y=?";
+            DbCommand.Parameters.Add("sPTime", OdbcType.Double).Value = sPTime;
+            DbCommand.Parameters.Add("ePTime", OdbcType.Double).Value = ePTime;
+            DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
+            DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
+            DbCommand.ExecuteNonQuery();
         }
     }
 }

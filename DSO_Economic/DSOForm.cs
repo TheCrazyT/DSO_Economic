@@ -106,7 +106,7 @@ namespace DSO_Economic
                 mem2 = new uint[1];
                 if (!Global.ReadProcessMemory(handle, MainClass + 0x88, mem2, 4, ref br)) continue;
 
-                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x1b0, mem2, 4, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x1a8, mem2, 4, ref br)) continue;
 
                 if (!Global.ReadProcessMemory(handle, mem2[0] + 0x68, mem2, 4, ref br)) continue;
 
@@ -125,17 +125,19 @@ namespace DSO_Economic
                 buildingEntries = new List<BuildingEntry>();
                 Buildings = new Dictionary<String,uint>();
 
+                Global.DbConnection3.Open();
                 for (int x = 0; x < cnt; x++)
                 {
-                    Debug.Print("Building at: {0:x}", mem2[x] & 0xFFFFFFF8);
                     BuildingEntry BE = new BuildingEntry(mem2[x] & 0xFFFFFFF8);
-                    Debug.Print(BE.Name);
+                    Debug.Print("Building at: {0:x}", mem2[x] & 0xFFFFFFF8);
+                    Debug.Print("{0} {1} {2}",BE.Name,BE.X,BE.Y);
                     if (!Buildings.ContainsKey(BE.Name))
                         Buildings.Add(BE.Name, 1);
                     else
                         Buildings[BE.Name]++;
                     buildingEntries.Add(BE);
                 }
+                Global.DbConnection3.Close();
 
                 lst_buildings.DisplayMember = "Name";
                 lst_buildings.ValueMember = "Value";
@@ -234,6 +236,8 @@ namespace DSO_Economic
         private void DSOEForm_Load(object sender, EventArgs e)
         {
             #region init
+            this.Visible = false;
+            this.Text = "DSO Economic Version " + System.Configuration.ConfigurationManager.AppSettings["Version"];
             string[] args = Environment.GetCommandLineArgs();
             uint h = 0;
 
@@ -448,6 +452,7 @@ namespace DSO_Economic
 
                 refreshItemList();
                 ItemRefresh.Enabled = true;
+                BuildingRefresh.Enabled = true;
             }
             else
             {
@@ -473,18 +478,22 @@ namespace DSO_Economic
                     errorcode += "0";
 
                 MessageBox.Show("Fehlercode: " + errorcode + "\nDaten konnten nicht abgefangen werden.\nEntweder ist das Spiel noch nicht gestartet, oder die Version dieses Programms ist veraltet!", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Application.Exit();
             }
+            this.Visible = true;
             LDForm.Hide();
             LDForm.Dispose();
         }
 
         private void ItemRefresh_Tick(object sender, EventArgs e)
         {
+            ItemRefresh.Enabled = false;
             refreshItemList();
             Global.DbConnection3.Open();
             foreach (ItemEntry i in itemEntries)
                 i.save();
             Global.DbConnection3.Close();
+            ItemRefresh.Enabled = true;
         }
 
         private void items_SelectedValueChanged(object sender, EventArgs e)
@@ -723,6 +732,16 @@ namespace DSO_Economic
                 }
             }
 
+        }
+
+        private void BuildingRefresh_Tick(object sender, EventArgs e)
+        {
+            BuildingRefresh.Enabled = false;
+            Global.DbConnection3.Open();
+            foreach (BuildingEntry b in buildingEntries)
+                b.save();
+            Global.DbConnection3.Close();
+            BuildingRefresh.Enabled = true;
         }
 
     }

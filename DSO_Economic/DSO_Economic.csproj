@@ -98,6 +98,7 @@
     <Compile Include="ResourceEntry.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="BuildingProductionTimes.txt" />
     <Content Include="Data.accdb">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
