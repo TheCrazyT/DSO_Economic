@@ -7,11 +7,11 @@ using System.Diagnostics;
 namespace DSO_Economic
 {
 
-    public class ItemEntry
+    public class CItemEntry
     {
         private uint _ID;
         private static int last_ID = -1;
-        public string Amount
+        public string amountStr
         {
             get
             {
@@ -48,8 +48,32 @@ namespace DSO_Economic
             }
         }
         private string _Name;
+        public string internName
+        {
+            get
+            {
+                uint br = 0;
+                uint[] mem2 = new uint[4];
+
+                if (!Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset + 0x18), mem2, 4, ref br)) return "";
+
+                if (!Global.ReadProcessMemory(Global.Main.Handle, mem2[0] + 0x08, mem2, 4 * 3, ref br)) return "";
+                uint reloffset = mem2[0];
+                uint offset = mem2[1];
+                uint size = mem2[2];
+                byte[] mem = new byte[size];
+                if (!Global.ReadProcessMemory(Global.Main.Handle, offset+0x08, mem2, 4, ref br)) return "";
+                offset=mem2[0];
+                if (!Global.ReadProcessMemory(Global.Main.Handle, offset+reloffset, mem, size, ref br)) return "";
+                
+
+                string Name = Encoding.UTF8.GetString(mem);
+                if (Name == null) Name = "";
+                return Name;
+            }
+        }
         public long memoffset;
-        public ItemEntry(long offset)
+        public CItemEntry(long offset)
         {
             _ID = (uint)(last_ID + 1);
             last_ID = (int)_ID;
@@ -61,7 +85,7 @@ namespace DSO_Economic
         }
         public static void reset()
         {
-            ItemEntry.last_ID = -1;
+            CItemEntry.last_ID = -1;
         }
         public void setID(uint ID)
         {

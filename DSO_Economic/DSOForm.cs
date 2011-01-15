@@ -12,9 +12,11 @@ using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using ZedGraph;
+using System.Xml.Serialization;
 
 namespace DSO_Economic
 {
+
     public partial class DSOEForm : Form
     {
         private static MyProcessModule npswf = null;
@@ -23,10 +25,7 @@ namespace DSO_Economic
         private static uint vartype;
         private static uint BuildingsPointer = 0;
 
-        public static List<ItemEntry> itemEntries;
-        private static List<ResourceEntry> resourceEntries;
-        private static List<BuildingEntry> buildingEntries;
-        private static Dictionary<String,uint> Buildings;
+        private static Dictionary<String, uint> Buildings;
 
         private static bool usecustomdb = false;
         private static bool usetxt = false;
@@ -42,7 +41,7 @@ namespace DSO_Economic
         }
 
         #region MemorySearchFunctions
-        private void findMainClass(IntPtr handle,uint[] mem, uint start, uint size)
+        private void findMainClass(IntPtr handle, uint[] mem, uint start, uint size)
         {
             Application.DoEvents();
             uint i = 0;
@@ -64,7 +63,7 @@ namespace DSO_Economic
                     continue;
                 if (mem[(i + 0x3C) / 4] > 40)
                     continue;
-                v = mem[(i+0x38) / 4];
+                v = mem[(i + 0x38) / 4];
                 w = mem[(i + 0x40) / 4];
                 if (w < v) continue;
                 if (v > 1000) continue;
@@ -76,7 +75,7 @@ namespace DSO_Economic
 
                 uint br = 0;
                 uint[] mem2 = new uint[4];
-                if (!Global.ReadProcessMemory(handle, w, mem2, 4*4, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, w, mem2, 4 * 4, ref br)) continue;
 
                 if (mem2[0] != 44) continue;
                 if (mem2[1] != 46) continue;
@@ -85,22 +84,23 @@ namespace DSO_Economic
                 if ((starttbl > (uint)npswf.BaseAddress) && (starttbl < (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                     continue;
 
-                uint sz=(uint)(4 * Global.itemnames.Count);
+                uint sz = (uint)(4 * Global.itemnames.Count);
                 mem2 = new uint[Global.itemnames.Count + 1];
                 if (!Global.ReadProcessMemory(handle, starttbl + 8, mem2, sz, ref br)) continue;
 
                 MainClass = start + i;
                 Debug.Print("Main class at: {0:x}", start + i);
 
-                
+
                 Debug.Print("Table at: {0:x}", starttbl);
-                itemEntries = new List<ItemEntry>();
-                ItemEntry.reset();
+                Global.itemEntries = new List<CItemEntry>();
+                CItemEntry.reset();
                 for (int x = 0; x < Global.itemnames.Count; x++)
                 {
-                    ItemEntry ie = new ItemEntry(mem2[x] & 0xFFFFFFF8);
+                    CItemEntry ie = new CItemEntry(mem2[x] & 0xFFFFFFF8);
                     if (x == 0) max = ie.max;
-                    itemEntries.Add(ie);
+                    Debug.Print(ie.internName);
+                    Global.itemEntries.Add(ie);
                 }
 
                 mem2 = new uint[1];
@@ -122,20 +122,20 @@ namespace DSO_Economic
                 mem2 = new uint[cnt];
                 if (!Global.ReadProcessMemory(handle, BuildingsPointer, mem2, cnt * 4, ref br)) continue;
 
-                buildingEntries = new List<BuildingEntry>();
-                Buildings = new Dictionary<String,uint>();
+                Global.buildingEntries = new List<CBuildingEntry>();
+                Buildings = new Dictionary<String, uint>();
 
                 Global.DbConnection3.Open();
                 for (int x = 0; x < cnt; x++)
                 {
-                    BuildingEntry BE = new BuildingEntry(mem2[x] & 0xFFFFFFF8);
+                    CBuildingEntry BE = new CBuildingEntry(mem2[x] & 0xFFFFFFF8);
                     Debug.Print("Building at: {0:x}", mem2[x] & 0xFFFFFFF8);
-                    Debug.Print("{0} {1} {2}",BE.Name,BE.X,BE.Y);
+                    Debug.Print("{0} {1} {2}", BE.Name, BE.X, BE.Y);
                     if (!Buildings.ContainsKey(BE.Name))
                         Buildings.Add(BE.Name, 1);
                     else
                         Buildings[BE.Name]++;
-                    buildingEntries.Add(BE);
+                    Global.buildingEntries.Add(BE);
                 }
                 Global.DbConnection3.Close();
 
@@ -144,7 +144,7 @@ namespace DSO_Economic
 
                 foreach (String name in Buildings.Keys)
                 {
-                    NameValue NV = new NameValue(name + " : " + Buildings[name],name);
+                    CNameValue NV = new CNameValue(name + " : " + Buildings[name], name);
                     lst_buildings.Items.Add(NV);
                 }
                 Debug.Print("Building array at: {0:x}", BuildingsPointer);
@@ -187,7 +187,7 @@ namespace DSO_Economic
                         continue;
 
 
-                resourceEntries.Add(new ResourceEntry(start + i + 0x40));
+                Global.resourceEntries.Add(new CResourceEntry(start + i + 0x40));
             }
             return;
         }
@@ -199,19 +199,19 @@ namespace DSO_Economic
         {
 
             int idx = items.SelectedIndex;
-            items.BindingContext[itemEntries].SuspendBinding();
-            items.BindingContext[itemEntries].ResumeBinding();
+            items.BindingContext[Global.itemEntries].SuspendBinding();
+            items.BindingContext[Global.itemEntries].ResumeBinding();
             items.SelectedIndex = idx;
 
 
-            resourceEntries.Sort(ResourceEntry.SortByAmount);
+            Global.resourceEntries.Sort(CResourceEntry.SortByAmount);
             object idx2 = resources.SelectedItem;
-            resources.BindingContext[resourceEntries].SuspendBinding();
-            resources.BindingContext[resourceEntries].ResumeBinding();
+            resources.BindingContext[Global.resourceEntries].SuspendBinding();
+            resources.BindingContext[Global.resourceEntries].ResumeBinding();
             resources.SelectedItem = idx2;
         }
 
-        private void CreateGraph(ZedGraphControl zgc, string title, PointPairList ppl)
+        private void CreateGraph(ZedGraphControl zgc, string title, PointPairList ppl1, PointPairList ppl2)
         {
             GraphPane myPane = zgc.GraphPane;
             myPane.CurveList.Clear();
@@ -225,10 +225,16 @@ namespace DSO_Economic
 
             myPane.YAxis.Title.Text = "Anzahl";
 
-            LineItem myCurve = myPane.AddCurve(title, ppl, Color.Blue,
+            LineItem myCurve1 = myPane.AddCurve(title, ppl1, Color.Blue,
                               SymbolType.Circle);
-            myCurve.Line.Fill = new Fill(Color.White, Color.Red, 45F);
-            myCurve.Symbol.Fill = new Fill(Color.White);
+            myCurve1.Line.Fill = new Fill(Color.White, Color.Red, 45F);
+            myCurve1.Symbol.Fill = new Fill(Color.White);
+
+            LineItem myCurve2 = myPane.AddCurve("Prognose", ppl2, Color.Green,
+                              SymbolType.None);
+            myCurve2.Line.Fill = new Fill(Color.White, Color.Gold, 45F);
+            myCurve2.Symbol.Fill = new Fill(Color.White);
+
             myPane.Chart.Fill = new Fill(Color.White, Color.LightGoldenrodYellow, 45F);
             myPane.Fill = new Fill(Color.White, Color.FromArgb(220, 220, 255), 45F);
             zgc.AxisChange();
@@ -236,6 +242,7 @@ namespace DSO_Economic
         private void DSOEForm_Load(object sender, EventArgs e)
         {
             #region init
+
             this.Visible = false;
             this.Text = "DSO Economic Version " + System.Configuration.ConfigurationManager.AppSettings["Version"];
             string[] args = Environment.GetCommandLineArgs();
@@ -248,7 +255,7 @@ namespace DSO_Economic
                 {
                     usecustomdb = true;
                 }
-                if (arg == "/usesqlite")
+                if (arg == "/usesqlitedb")
                 {
                     usesqlite = true;
                 }
@@ -311,7 +318,7 @@ namespace DSO_Economic
             }
             #endregion
 
-            
+
             uint MaxAddress = 0x7fffffff;
             long address = 0;
             bool result;
@@ -327,25 +334,25 @@ namespace DSO_Economic
                 Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
             }
             else
-            if (usecustomdb)
-            {
-                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-            }
-            else
-            if (!usetxt)
-            {
-                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-            }
-            else
-            {
-                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-            }
+                if (usecustomdb)
+                {
+                    Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                    Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                    Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                }
+                else
+                    if (!usetxt)
+                    {
+                        Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                        Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                        Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                    }
+                    else
+                    {
+                        Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                        Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                        Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                    }
 
             Global.DbConnection.Open();
             OdbcCommand DbCommand = Global.DbConnection.CreateCommand();
@@ -362,8 +369,8 @@ namespace DSO_Economic
             Global.DbConnection.Close();
 
 
-            itemEntries = new List<ItemEntry>();
-            resourceEntries = new List<ResourceEntry>();
+            Global.itemEntries = new List<CItemEntry>();
+            Global.resourceEntries = new List<CResourceEntry>();
             string[] processes = new string[] { "plugin-container", "iexplore" }; //plugin-container für Chrome und Firefox ... IE macht wieder sein eigenes Ding
             foreach (string pname in processes)
             {
@@ -425,7 +432,7 @@ namespace DSO_Economic
                             continue;
                         }
 
-                        findMainClass(p.Handle,mem, (uint)m.BaseAddress, (uint)m.RegionSize);
+                        findMainClass(p.Handle, mem, (uint)m.BaseAddress, (uint)m.RegionSize);
 
                         //findItems(mem,(uint)m.BaseAddress, (uint)m.RegionSize);
                         findResources(mem, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
@@ -434,27 +441,13 @@ namespace DSO_Economic
 
                     } while (address <= MaxAddress);
 
-                    if ((Global.Main != null) && (itemEntries.Count > 0)) break;
+                    if ((Global.Main != null) && (Global.itemEntries.Count > 0)) break;
                 }
-                if ((Global.Main != null) && (itemEntries.Count > 0)) break;
+                if ((Global.Main != null) && (Global.itemEntries.Count > 0)) break;
             }
             #endregion
 
-            if ((Global.Main != null) && (itemEntries.Count > 0))
-            {
-                resources.DataSource = resourceEntries;
-                resources.DisplayMember = "Text";
-                resources.ValueMember = "ID";
-
-                items.DataSource = itemEntries;
-                items.DisplayMember = "Text";
-                items.ValueMember = "ID";
-
-                refreshItemList();
-                ItemRefresh.Enabled = true;
-                BuildingRefresh.Enabled = true;
-            }
-            else
+            if ((Global.Main == null) || (Global.itemEntries.Count == 0))
             {
                 string errorcode = "";
                 if (Global.Main == null)
@@ -462,12 +455,12 @@ namespace DSO_Economic
                 else
                     errorcode += "0";
 
-                if (itemEntries.Count == 0)
+                if (Global.itemEntries.Count == 0)
                     errorcode += "1";
                 else
                     errorcode += "0";
 
-                if (resourceEntries.Count == 0) //kein KO-Kriterium, aber dennoch hilfreich bei der Fehlersuche
+                if (Global.resourceEntries.Count == 0) //kein KO-Kriterium, aber dennoch hilfreich bei der Fehlersuche
                     errorcode += "1";
                 else
                     errorcode += "0";
@@ -480,6 +473,34 @@ namespace DSO_Economic
                 MessageBox.Show("Fehlercode: " + errorcode + "\nDaten konnten nicht abgefangen werden.\nEntweder ist das Spiel noch nicht gestartet, oder die Version dieses Programms ist veraltet!", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Application.Exit();
             }
+
+
+            XmlSerializer xs = new XmlSerializer(typeof(CProduction));
+            FileStream fs = new FileStream("ResourceProduction.xml", FileMode.Open);
+            Global.Production = (CProduction)xs.Deserialize(fs);
+            Global.Production.init();
+            /*Global.Production = new CProduction();
+            CProductionBuilding pb = new CProductionBuilding("Test");
+            pb.ResourceProduced = new CProductionResource("Wood",1);
+            pb.ResourcesNeeded.Add(new CProductionResource("Wood", 2));
+            Global.Production.Building.Add(pb);
+            FileStream fs = new FileStream("ResourceProductionSave.xml", FileMode.Create);
+            xs.Serialize(fs, Global.Production);
+            fs.Close();*/
+
+            resources.DataSource = Global.resourceEntries;
+            resources.DisplayMember = "Text";
+            resources.ValueMember = "ID";
+
+            items.DataSource = Global.itemEntries;
+            items.DisplayMember = "Text";
+            items.ValueMember = "ID";
+
+            refreshItemList();
+            ItemRefresh.Enabled = true;
+            BuildingRefresh.Enabled = true;
+
+
             this.Visible = true;
             LDForm.Hide();
             LDForm.Dispose();
@@ -490,7 +511,7 @@ namespace DSO_Economic
             ItemRefresh.Enabled = false;
             refreshItemList();
             Global.DbConnection3.Open();
-            foreach (ItemEntry i in itemEntries)
+            foreach (CItemEntry i in Global.itemEntries)
                 i.save();
             Global.DbConnection3.Close();
             ItemRefresh.Enabled = true;
@@ -499,18 +520,18 @@ namespace DSO_Economic
         private void items_SelectedValueChanged(object sender, EventArgs e)
         {
             if (items.SelectedIndex == -1) return;
+            PointPairList list = new PointPairList();
             try
             {
                 Global.DbConnection2.Open();
                 OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
                 //DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + items.SelectedIndex + " AND [DateTime]>CDate('" + DateTime.Now.AddDays(-1) + "') ORDER BY [DateTime] ASC";
                 DbCommand.CommandText = "SELECT [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC";
-                DbCommand.Parameters.Add("ID",OdbcType.Int).Value = items.SelectedIndex;
+                DbCommand.Parameters.Add("ID", OdbcType.Int).Value = items.SelectedIndex;
                 DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddDays(-1);
 
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
-                PointPairList list = new PointPairList();
                 while (DbReader.Read())
                 {
 
@@ -519,13 +540,15 @@ namespace DSO_Economic
                 }
                 DbReader.Close();
                 Global.DbConnection2.Close();
-                CreateGraph(graph, Global.itemnames[items.SelectedIndex], list);
-                graph.Refresh();
             }
             catch (Exception er)
             {
                 Debug.Print(er.StackTrace);
             }
+
+            PointPairList list2 = Global.Production.simulate(Global.itemEntries[items.SelectedIndex].internName);
+            CreateGraph(graph, Global.itemnames[items.SelectedIndex], list, list2);
+            graph.Refresh();
         }
         private string getTimeLeftEmpty(uint ID)
         {
@@ -541,8 +564,8 @@ namespace DSO_Economic
 
                 OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
                 //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
-                DbCommand.CommandText = "SELECT "+limit1+" [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC"+limit2;
-                DbCommand.Parameters.Add("ID",OdbcType.Int).Value=ID;
+                DbCommand.CommandText = "SELECT " + limit1 + " [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC" + limit2;
+                DbCommand.Parameters.Add("ID", OdbcType.Int).Value = ID;
                 DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddMinutes(-10);
 
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
@@ -550,7 +573,7 @@ namespace DSO_Economic
                 if (DbReader.Read())
                 {
                     long amt = DbReader.GetInt32(1);
-                    long amt2 = itemEntries[(int)ID].amount;
+                    long amt2 = Global.itemEntries[(int)ID].amount;
                     if (amt <= amt2)
                     {
                         DbReader.Close();
@@ -593,16 +616,16 @@ namespace DSO_Economic
                     limit2 = " LIMIT 1 ";
                 else
                     limit1 = " TOP 1 ";
-                DbCommand.CommandText = "SELECT "+limit1+" [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC"+limit2;
+                DbCommand.CommandText = "SELECT " + limit1 + " [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC" + limit2;
                 DbCommand.Parameters.Add("ID", OdbcType.Int).Value = ID;
                 DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddMinutes(-10);
-                
+
                 OdbcDataReader DbReader = DbCommand.ExecuteReader();
 
                 if (DbReader.Read())
                 {
                     long amt = DbReader.GetInt32(1);
-                    long amt2 = itemEntries[(int)ID].amount;
+                    long amt2 = Global.itemEntries[(int)ID].amount;
                     if (amt >= amt2)
                     {
                         DbReader.Close();
@@ -647,7 +670,7 @@ namespace DSO_Economic
         {
             if (tabCtrl.SelectedTab == tabCtrl.TabPages[1])
             {
-                foreach (ItemEntry ie in itemEntries)
+                foreach (CItemEntry ie in Global.itemEntries)
                 {
                     string[] cols = new string[3];
                     cols[0] = ie.Text;
@@ -667,14 +690,14 @@ namespace DSO_Economic
 
         private void lst_buildings_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if(lst_buildings.SelectedIndex==-1)return;
+            if (lst_buildings.SelectedIndex == -1) return;
             lst_production.Items.Clear();
-            uint i=0;
-            foreach(BuildingEntry b in buildingEntries)
-                if(b.Name==((NameValue)lst_buildings.SelectedItem).Value)
+            uint i = 0;
+            foreach (CBuildingEntry b in Global.buildingEntries)
+                if (b.Name == ((CNameValue)lst_buildings.SelectedItem).Value)
                 {
                     ListViewItem lve = new ListViewItem();
-                    lve.Text = b.Name+i.ToString();
+                    lve.Text = b.Name + i.ToString();
                     i++;
                     lst_production.Items.Add(lve);
                     if (b == null) continue;
@@ -716,7 +739,7 @@ namespace DSO_Economic
                 if ((s = new StreamWriter(sfd.OpenFile())) != null)
                 {
                     s.WriteLine("Name,PTime,Level,Active");
-                    foreach (BuildingEntry b in buildingEntries)
+                    foreach (CBuildingEntry b in Global.buildingEntries)
                     {
                         double ticks = b.ePTime - b.sPTime;
                         if ((b.ePTime == -1) || (b.sPTime == -1))
@@ -726,7 +749,7 @@ namespace DSO_Economic
                             a = "1";
                         else
                             a = "0";
-                        s.WriteLine(b.Name+","+(ticks/1000)+","+b.level+","+a);
+                        s.WriteLine(b.Name + "," + (ticks / 1000) + "," + b.level + "," + a);
                     }
                     s.Close();
                 }
@@ -738,18 +761,18 @@ namespace DSO_Economic
         {
             BuildingRefresh.Enabled = false;
             Global.DbConnection3.Open();
-            foreach (BuildingEntry b in buildingEntries)
+            foreach (CBuildingEntry b in Global.buildingEntries)
                 b.save();
             Global.DbConnection3.Close();
             BuildingRefresh.Enabled = true;
         }
 
     }
-    public class NameValue
+    public class CNameValue
     {
         public string Name;
         public string Value;
-        public NameValue(string Name, string Value)
+        public CNameValue(string Name, string Value)
         {
             this.Name = Name;
             this.Value = Value;

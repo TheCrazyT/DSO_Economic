@@ -26,10 +26,41 @@ namespace DSO_Economic.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=|DataDirectory|\\Data.accdb")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=|DataDirectory|\\Data.accdb")]
         public string DataDB {
             get {
                 return ((string)(this["DataDB"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Driver={Microsoft Text Driver (*.txt; *.csv)};DBQ=|DataDirectory|\\;Extensions=txt" +
+            ";")]
+        public string CsvDB {
+            get {
+                return ((string)(this["CsvDB"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Driver={SQLite3 ODBC Driver};Database=|DataDirectory|\\data.db;LongNames=0;Timeout" +
+            "=1000;NoTXN=0;SyncPragma=NORMAL;StepAPI=0;")]
+        public string SQLiteDB {
+            get {
+                return ((string)(this["SQLiteDB"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        public string CustomDB {
+            get {
+                return ((string)(this["CustomDB"]));
             }
         }
     }

@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace DSO_Economic
 {
-    public class BuildingEntry
+    public class CBuildingEntry
     {
         public uint memoffset;
         private uint RCoffset;
@@ -106,7 +106,7 @@ namespace DSO_Economic
                 return mem[0];
             }
         }
-        public BuildingEntry(uint offset)
+        public CBuildingEntry(uint offset)
         {
             Name = "";
             this.memoffset = offset;

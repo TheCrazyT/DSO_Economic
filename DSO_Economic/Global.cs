@@ -18,8 +18,13 @@ namespace DSO_Economic
         public static OdbcConnection DbConnection;
         public static OdbcConnection DbConnection2;
         public static OdbcConnection DbConnection3;
-        public static string tblext = "";
 
+        public static List<CItemEntry> itemEntries;
+        public static List<CBuildingEntry> buildingEntries;
+        public static List<CResourceEntry> resourceEntries;
+
+        public static string tblext = "";
+        public static CProduction Production;
 
         [DllImport("Kernel32.dll")]
         static public extern bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);

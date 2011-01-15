@@ -5,22 +5,22 @@ using System.Diagnostics;
 
 namespace DSO_Economic
 {
-    public class ResourceEntry : IComparable
+    public class CResourceEntry : IComparable
     {
         private long memoffset;
         public long amount;
         private uint _ID;
         private static uint lastresourceEntriesID = 0;
-        public static IComparer<ResourceEntry> SortByAmount
+        public static IComparer<CResourceEntry> SortByAmount
         {
             get
             {
-                return ((IComparer<ResourceEntry>)new SortByAmountClass());
+                return ((IComparer<CResourceEntry>)new SortByAmountClass());
             }
         }
-        class SortByAmountClass : IComparer<ResourceEntry>
+        class SortByAmountClass : IComparer<CResourceEntry>
         {
-            public int Compare(ResourceEntry a, ResourceEntry b)
+            public int Compare(CResourceEntry a, CResourceEntry b)
             {
                 return a.CompareTo(b);
             }
@@ -32,7 +32,7 @@ namespace DSO_Economic
                 return _ID;
             }
         }
-        public ResourceEntry(long offset)
+        public CResourceEntry(long offset)
         {
             this._ID = lastresourceEntriesID;
             lastresourceEntriesID++;
@@ -41,7 +41,7 @@ namespace DSO_Economic
         }
         public int CompareTo(object obj)
         {
-            return ((ResourceEntry)obj).amount.CompareTo(amount);
+            return ((CResourceEntry)obj).amount.CompareTo(amount);
         }
         public string Text
         {
