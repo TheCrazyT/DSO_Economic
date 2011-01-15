@@ -181,7 +181,7 @@ IronSword
             {
                 if(!nobackstep)
                 foreach (CProductionBuilding pb in sourceBuildingGroup)
-                    pb.simulate(simulationStep,false,true);
+                    if (!pb.simulate(simulationStep, false, true)) return false;
                 foreach (CBuildingEntryWrap be in buildingProduce)
                 {
                     if (be.ePTime == -1) return false;
@@ -214,9 +214,9 @@ IronSword
                         }
                     }
                 }
-                if(!noforwardstep)
-                foreach (CProductionBuilding pb in targetBuildingGroup)
-                    pb.simulate(simulationStep, true, false);
+                if (!noforwardstep)
+                    foreach (CProductionBuilding pb in targetBuildingGroup)
+                        if (!pb.simulate(simulationStep, true, false)) return false;
                 return true;
             }
         }

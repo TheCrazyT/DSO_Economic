@@ -1,42 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CProduction xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <buildingGroup><CProductionBuilding><name>Forester</name><resourcesNeeded/><resourceProduced><name>Wood</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>WoodCutter</name><resourcesNeeded/><resourceProduced><name>Wood</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Sawmill</name><resourcesNeeded/><resourceProduced><name>Plank</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Mason</name><resourcesNeeded/><resourceProduced><name>Stone</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+            <buildingGroup><CProductionBuilding><name>Forester</name><resourcesNeeded/><resourceProduced><name></name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>WoodCutter</name><resourcesNeeded/><resourceProduced><name>Wood</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Sawmill</name><resourcesNeeded><CProductionResource><name>Wood</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Plank</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Mason</name><resourcesNeeded/><resourceProduced><name>Stone</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>Fisher</name><resourcesNeeded/><resourceProduced><name>Fish</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>CokingPlant</name><resourcesNeeded/><resourceProduced><name>Coal</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>BronzeMine</name><resourcesNeeded/><resourceProduced><name>BronzeOre</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>BronzeSmelter</name><resourcesNeeded><CProductionResource><name>BronzeOre</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Bronze</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Fisher</name><resourcesNeeded/><resourceProduced><name>Fish</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>CokingPlant</name><resourcesNeeded><CProductionResource><name>Wood</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Coal</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>Toolmaker</name><resourcesNeeded/><resourceProduced><name>Tool</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Well</name><resourcesNeeded/><resourceProduced><name>Water</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Farm</name><resourcesNeeded/><resourceProduced><name>Corn</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Brewery</name><resourcesNeeded><CProductionResource><name>Corn</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Beer</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>BronzeMine</name><resourcesNeeded/><resourceProduced><name>BronzeOre</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>BronzeSmelter</name><resourcesNeeded><CProductionResource><name>BronzeOre</name><amount>1</amount></CProductionResource><CProductionResource><name>Coal</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Bronze</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>BronzeWeaponsmith</name><resourcesNeeded><CProductionResource><name>Bronze</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>BronzeSword</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Miller</name><resourcesNeeded/><resourceProduced><name>Flour</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Bakery</name><resourcesNeeded><CProductionResource><name>Flour</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Bread</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Toolmaker</name><resourcesNeeded><CProductionResource><name>Bronze</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Tool</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>RealWoodForester</name><resourcesNeeded/><resourceProduced><name>RealWood</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>RealWoodCutter</name><resourcesNeeded/><resourceProduced><name>RealWood</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>RealWoodSawmill</name><resourcesNeeded/><resourceProduced><name>RealPlank</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>MarbleMason</name><resourcesNeeded/><resourceProduced><name>Marble</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Well</name><resourcesNeeded/><resourceProduced><name>Water</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Well_02</name><resourcesNeeded/><resourceProduced><name>Water</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Farm</name><resourcesNeeded/><resourceProduced><name>Corn</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>IronMine</name><resourcesNeeded/><resourceProduced><name>IronOre</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>IronSmelter</name><resourcesNeeded><CProductionResource><name>IronOre</name><amount>4</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Iron</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>IronWeaponsmith</name><resourcesNeeded><CProductionResource><name>Iron</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>IronSword</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Brewery</name><resourcesNeeded><CProductionResource><name>Corn</name><amount>1</amount></CProductionResource><CProductionResource><name>Water</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Beer</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>BronzeWeaponsmith</name><resourcesNeeded><CProductionResource><name>Bronze</name><amount>1</amount></CProductionResource><CProductionResource><name>Coal</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>BronzeSword</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Miller</name><resourcesNeeded><CProductionResource><name>Corn</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Flour</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>Bowmaker</name><resourcesNeeded/><resourceProduced><name>Bow</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Hunter</name><resourcesNeeded/><resourceProduced><name>Meat</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Butcher</name><resourcesNeeded/><resourceProduced><name>Sausage</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Stable</name><resourcesNeeded><CProductionResource><name>Corn</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Horse</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Bakery</name><resourcesNeeded><CProductionResource><name>Flour</name><amount>1</amount></CProductionResource><CProductionResource><name>Water</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Bread</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>GoldMine</name><resourcesNeeded/><resourceProduced><name>GoldOre</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>GoldSmelter</name><resourcesNeeded><CProductionResource><name>GoldOre</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Gold</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>Coinage</name><resourcesNeeded/><resourceProduced><name>Coin</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>RealWoodForester</name><resourcesNeeded/><resourceProduced><name></name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>RealWoodCutter</name><resourcesNeeded/><resourceProduced><name>RealWood</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>RealWoodSawmill</name><resourcesNeeded><CProductionResource><name>RealWood</name><amount>1</amount></CProductionResource></resourcesNeeded><resourceProduced><name>RealPlank</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
 
-    <buildingGroup><CProductionBuilding><name>SteelForge</name><resourcesNeeded><CProductionResource><name>Iron</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Steel</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
-    <buildingGroup><CProductionBuilding><name>SteelWeaponsmith</name><resourcesNeeded><CProductionResource><name>Steel</name><amount>2</amount></CProductionResource></resourcesNeeded><resourceProduced><name>SteelSword</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>MarbleMason</name><resourcesNeeded/><resourceProduced><name>Marble</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+
+			<buildingGroup><CProductionBuilding><name>IronMine</name><resourcesNeeded/><resourceProduced><name>IronOre</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>IronSmelter</name><resourcesNeeded><CProductionResource><name>IronOre</name><amount>4</amount></CProductionResource><CProductionResource><name>Coal</name><amount>6</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Iron</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+
+			<buildingGroup><CProductionBuilding><name>IronWeaponsmith</name><resourcesNeeded><CProductionResource><name>Iron</name><amount>2</amount></CProductionResource><CProductionResource><name>Coal</name><amount>8</amount></CProductionResource></resourcesNeeded><resourceProduced><name>IronSword</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Bowmaker</name><resourcesNeeded><CProductionResource><name>Wood</name><amount>8</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Bow</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+
+			<buildingGroup><CProductionBuilding><name>Hunter</name><resourcesNeeded/><resourceProduced><name>Meat</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Butcher</name><resourcesNeeded><CProductionResource><name>Meat</name><amount>4</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Sausage</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Stable</name><resourcesNeeded><CProductionResource><name>Corn</name><amount>2</amount></CProductionResource><CProductionResource><name>Water</name><amount>4</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Horse</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+
+			<buildingGroup><CProductionBuilding><name>GoldMine</name><resourcesNeeded/><resourceProduced><name>GoldOre</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+
+			<buildingGroup><CProductionBuilding><name>GoldSmelter</name><resourcesNeeded><CProductionResource><name>GoldOre</name><amount>2</amount></CProductionResource><CProductionResource><name>Coal</name><amount>8</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Gold</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>Coinage</name><resourcesNeeded><CProductionResource><name>Gold</name><amount>4</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Coin</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+
+			<buildingGroup><CProductionBuilding><name>SteelForge</name><resourcesNeeded><CProductionResource><name>Iron</name><amount>2</amount></CProductionResource><CProductionResource><name>Coal</name><amount>6</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Steel</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+			<buildingGroup><CProductionBuilding><name>SteelWeaponsmith</name><resourcesNeeded><CProductionResource><name>Steel</name><amount>2</amount></CProductionResource><CProductionResource><name>Coal</name><amount>16</amount></CProductionResource></resourcesNeeded><resourceProduced><name>SteelSword</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+
+			<buildingGroup><CProductionBuilding><name>Longbowmaker</name><resourcesNeeded><CProductionResource><name>RealWood</name><amount>16</amount></CProductionResource></resourcesNeeded><resourceProduced><name>Longbow</name><amount>1</amount></resourceProduced></CProductionBuilding></buildingGroup>
+	
 </CProduction>

@@ -545,8 +545,10 @@ namespace DSO_Economic
             {
                 Debug.Print(er.StackTrace);
             }
-
-            PointPairList list2 = Global.Production.simulate(Global.itemEntries[items.SelectedIndex].internName);
+            PointPairList list2=new PointPairList();
+            foreach(CItemEntry ie in Global.itemEntries)
+                if(ie.ID==items.SelectedIndex)
+                    list2 = Global.Production.simulate(ie.internName);
             CreateGraph(graph, Global.itemnames[items.SelectedIndex], list, list2);
             graph.Refresh();
         }
