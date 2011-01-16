@@ -171,4 +171,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>D:\DSO_Eco\Release\CreateRelease.bat "$(ProjectDir)"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

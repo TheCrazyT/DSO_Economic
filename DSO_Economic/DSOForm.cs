@@ -472,6 +472,7 @@ namespace DSO_Economic
 
                 MessageBox.Show("Fehlercode: " + errorcode + "\nDaten konnten nicht abgefangen werden.\nEntweder ist das Spiel noch nicht gestartet, oder die Version dieses Programms ist veraltet!", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Application.Exit();
+                return;
             }
 
 
@@ -552,120 +553,36 @@ namespace DSO_Economic
             CreateGraph(graph, Global.itemnames[items.SelectedIndex], list, list2);
             graph.Refresh();
         }
-        private string getTimeLeftEmpty(uint ID)
+        private string formatedTimeFromSeconds(double seconds)
         {
-            //TODO: genauere Berechnung mittels Korrelationsgerade
-            try
-            {
-                string limit1 = "";
-                string limit2 = "";
-                if (usesqlite)
-                    limit2 = " LIMIT 1 ";
-                else
-                    limit1 = " TOP 1 ";
+            if (seconds == -1) return "-";
+            int h = (int)(seconds / 60 / 60);
+            int min = (int)((seconds - h * 60 * 60 ) / 60);
+            int s = (int)(seconds - h * 60 * 60  + min * 60);
 
-                OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
-                //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
-                DbCommand.CommandText = "SELECT " + limit1 + " [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC" + limit2;
-                DbCommand.Parameters.Add("ID", OdbcType.Int).Value = ID;
-                DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddMinutes(-10);
-
-                OdbcDataReader DbReader = DbCommand.ExecuteReader();
-
-                if (DbReader.Read())
-                {
-                    long amt = DbReader.GetInt32(1);
-                    long amt2 = Global.itemEntries[(int)ID].amount;
-                    if (amt <= amt2)
-                    {
-                        DbReader.Close();
-                        return "-";
-                    }
-                    else
-                    {
-                        TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
-                        DbReader.Close();
-
-                        double ms = (amt2 / ((amt - amt2) / t.TotalMilliseconds));
-                        int h = (int)(ms / 1000 / 60 / 60);
-                        int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
-                        int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
-
-                        TimeSpan t2 = new TimeSpan(h, min, s);
-                        return t2.ToString();
-                    }
-                }
-                DbReader.Close();
-            }
-            catch (Exception e)
-            {
-                Debug.Print(e.StackTrace);
-            }
-
-            return "-";
-        }
-        private string getTimeLeftFull(uint ID)
-        {
-            //TODO: genauere Berechnung mittels Korrelationsgerade
-            try
-            {
-                OdbcCommand DbCommand = Global.DbConnection2.CreateCommand();
-                //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + tblext + " WHERE ID=" + ID + " AND [DateTime]>DateAdd('m',-10,NOW()) ORDER BY [DateTime] ASC";
-                //DbCommand.CommandText = "SELECT TOP 1 [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=" + ID + " AND [DateTime]>CDate('" + DateTime.Now.AddMinutes(-10) + "') ORDER BY [DateTime] ASC";
-                string limit1 = "";
-                string limit2 = "";
-                if (usesqlite)
-                    limit2 = " LIMIT 1 ";
-                else
-                    limit1 = " TOP 1 ";
-                DbCommand.CommandText = "SELECT " + limit1 + " [DateTime],Amount FROM History" + Global.tblext + " WHERE ID=? AND [DateTime]>? ORDER BY [DateTime] ASC" + limit2;
-                DbCommand.Parameters.Add("ID", OdbcType.Int).Value = ID;
-                DbCommand.Parameters.Add("Date", OdbcType.DateTime).Value = DateTime.Now.AddMinutes(-10);
-
-                OdbcDataReader DbReader = DbCommand.ExecuteReader();
-
-                if (DbReader.Read())
-                {
-                    long amt = DbReader.GetInt32(1);
-                    long amt2 = Global.itemEntries[(int)ID].amount;
-                    if (amt >= amt2)
-                    {
-                        DbReader.Close();
-                        return "-";
-                    }
-                    else
-                    {
-                        TimeSpan t = DateTime.Now - DbReader.GetDateTime(0);
-                        DbReader.Close();
-
-                        double ms = ((max - amt2) / ((amt2 - amt) / t.TotalMilliseconds));
-                        int h = (int)(ms / 1000 / 60 / 60);
-                        int min = (int)((ms - h * 60 * 60 * 1000) / 1000 / 60);
-                        int s = (int)((ms - h * 60 * 60 * 1000 + min * 60 * 1000) / 1000);
-
-                        TimeSpan t2 = new TimeSpan(h, min, s);
-                        return t2.ToString();
-                    }
-                }
-                DbReader.Close();
-            }
-            catch (Exception e)
-            {
-                Debug.Print(e.StackTrace);
-            }
-
-            return "-";
+            TimeSpan t2 = new TimeSpan(h, min, s);
+            return t2.ToString();
         }
         private void TimeLeft_Tick(object sender, EventArgs e)
         {
+            TimeLeft.Enabled = false;
             Global.DbConnection2.Open();
-            uint i = 0;
+            int i = 0;
+            DateTime dt = DateTime.Now;
             foreach (ListViewItem liv in itemsOverview.Items)
             {
-                liv.SubItems[1].Text = getTimeLeftEmpty(i);
-                liv.SubItems[2].Text = getTimeLeftFull(i++);
+                string resname = Global.itemEntries[i++].internName;
+                liv.SubItems[1].Text = "*";
+                liv.SubItems[2].Text = "*";
+                Application.DoEvents();
+                liv.SubItems[1].Text = formatedTimeFromSeconds(Global.Production.findLimitEmpty(resname));
+                Application.DoEvents();
+                liv.SubItems[2].Text = formatedTimeFromSeconds(Global.Production.findLimitFull(resname));
+                Debug.Print("Fetch Limit for 1 item {1} took {0} seconds.", (DateTime.Now - dt).TotalSeconds,resname); 
+                Application.DoEvents();
             }
             Global.DbConnection2.Close();
+            TimeLeft.Enabled = true;
         }
 
         private void tabCtrl_Selected(object sender, TabControlEventArgs e)

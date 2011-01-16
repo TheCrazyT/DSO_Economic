@@ -9,6 +9,8 @@ namespace DSO_Economic
     {
         public List<CProductionBuilding> buildingGroup;
         public static List<CProductionResource> resourceList;
+        private List<CProductionStep> productionSteps;
+        private uint max;
         public CProduction()
         {
             /*
@@ -97,14 +99,38 @@ IronSword
                     if (be.Name == pb.name)
                         pb.addBuildingProduce(new CBuildingEntryWrap(be));
                 foreach (CProductionResource pr in pb.resourcesNeeded)
-                    foreach (CProductionBuilding pb2 in this.findBuildingGroupByRes(pr.name))
+                    foreach (CProductionBuilding pb2 in this.findBuildingGroupByResProduced(pr.name))
                     {
                         pb.addSourceBuilding(pb2);
                         pb2.addTargetBuilding(pb);
                     }
             }
         }
-        private List<CProductionBuilding> findBuildingGroupByRes(string resource)
+        private List<CProductionBuilding> getBuildingChain(string resource)
+        {
+            List<CProductionBuilding> pblist = new List<CProductionBuilding>();
+            foreach (CProductionBuilding pb in findBuildingGroupByResProduced(resource))
+                pblist.Add(pb);
+            if (pblist.Count == 0)
+                return new List<CProductionBuilding>();
+            int oldcount = pblist.Count;
+            do
+            {
+                oldcount = pblist.Count;
+                for (int i = 0; i < pblist.Count; i++)
+                {
+                    CProductionBuilding pb = pblist[i];
+                    foreach (CProductionBuilding pb2 in pb.sourceBuildingGroup)
+                        if (!pblist.Contains(pb2))
+                            pblist.Add(pb2);
+                    foreach (CProductionBuilding pb2 in pb.targetBuildingGroup)
+                        if (!pblist.Contains(pb2))
+                            pblist.Add(pb2);
+                }
+            } while (oldcount != pblist.Count);
+            return pblist;
+        }
+        private List<CProductionBuilding> findBuildingGroupByResProduced(string resource)
         {
             List<CProductionBuilding> pblist = new List<CProductionBuilding>();
             foreach (CProductionBuilding pb in this.buildingGroup)
@@ -119,34 +145,166 @@ IronSword
                     return pr;
             return null;
         }
+        public bool createProductionSteps(string resource)
+        {
+            return createProductionSteps(resource, 60 * 60);
+        }
+        public bool createProductionSteps(string resource,uint timelimit)
+        {
+            productionSteps = new List<CProductionStep>();
+            for (int i = 0; i < Global.itemEntries.Count; i++)
+                resourceList[i].amount = Global.itemEntries[i].amount;
+            max = Global.itemEntries[0].max;
+            foreach (CProductionBuilding pb in getBuildingChain(resource))
+                foreach (CBuildingEntryWrap bew in pb.buildingProduce)
+                {
+                    if ((bew.ePTime == -1) || (bew.sPTime == -1))
+                        return false;
+                    if ((bew.ePTime == 0) || (bew.sPTime == 0))
+                        return false;
+                    double PTime = bew.ePTime - bew.sPTime;
+                    uint ss = (uint)(PTime / 1000);
+                    for (uint i = 0; i < timelimit; i += ss)
+                        productionSteps.Add(new CProductionStep(i, bew));
+
+                }
+            productionSteps.Sort(SimulationStepSort.Comparison);
+            if (productionSteps.Count == 0) return false;
+            return true;
+        }
+
+        public double findLimitEmpty(string resource)
+        {
+            return findLimit(resource, false);
+        }
+        public double findLimitFull(string resource)
+        {
+            return findLimit(resource, true);
+        }
+        public double findLimit(string resource,bool full)
+        {
+            uint lastSimulationStep = 0;
+            uint timelimit=8 * 60 * 60;
+            if (!createProductionSteps(resource, timelimit)) return -1;
+
+            for (int i = 0; i < productionSteps.Count; i++)
+            {
+                CProductionStep ps = productionSteps[i];
+                bool allresourcesfound = true;
+                foreach (CProductionResource pr in ps.productionBuilding.resourcesNeeded)
+                    foreach (CProductionResource ie in resourceList)
+                        if (ie.name == pr.name)
+                            if (ps.productionBuilding.level * pr.amount > ie.amount)
+                                allresourcesfound = false;
+                if (!allresourcesfound)
+                {
+                    if (ps.simulationStep++ > timelimit)
+                        continue;
+                    for (int j = 0; j < productionSteps.Count - 1; j++)
+                    {
+                        if (productionSteps[j].simulationStep >= ps.simulationStep)
+                        {
+                            productionSteps[j] = ps;
+                            break;
+                        }
+                        productionSteps[j] = productionSteps[j + 1];
+                    }
+                    i--;
+                    continue;
+                }
+                else
+                {
+                    foreach (CProductionResource pr2 in ps.productionBuilding.resourcesNeeded)
+                        foreach (CProductionResource pr3 in resourceList)
+                            if (pr2.name == pr3.name)
+                                pr3.amount -= ps.productionBuilding.level * pr2.amount;
+                    foreach (CProductionResource pr2 in resourceList)
+                        if (pr2.name == ps.productionBuilding.resourceProduced.name)
+                            pr2.amount += ps.productionBuilding.level;
+                }
+                if (productionSteps[i].simulationStep > lastSimulationStep)
+                {
+                    CProductionResource res = findResourceByName(resource);
+                    if (!full)
+                        if (res.amount == 0)
+                            return productionSteps[i].simulationStep;
+                        else
+                            if (res.amount >= max)
+                                return -1;
+                    if (full)
+                        if (res.amount >= max)
+                            return productionSteps[i].simulationStep;
+                        else
+                            if (res.amount == 0)
+                                return -1;
+                    lastSimulationStep = productionSteps[i].simulationStep;
+                }
+            }
+            return -1;
+        }
         public PointPairList simulate(string resource)
         {
             DateTime startDate = DateTime.Now;
-            for (int i = 0; i < Global.itemEntries.Count; i++)
-                resourceList[i].amount = Global.itemEntries[i].amount;
-            uint simulationStep;
             PointPairList ppl = new PointPairList();
-            List<CProductionBuilding> pblist = findBuildingGroupByRes(resource);
-            for (simulationStep = 0; simulationStep < 60 * 60; simulationStep++)
-            {
-                foreach (CProductionBuilding pb in pblist)
-                    if (!pb.simulate(simulationStep))
-                        return new PointPairList();
+            uint lastSimulationStep = 0;
 
-                double diff = new XDate(startDate.AddSeconds(simulationStep));
-                ppl.Add(diff, findResourceByName(resource).amount);
+            if (!createProductionSteps(resource)) return new PointPairList();
+
+            for (int i = 0; i < productionSteps.Count; i++)
+            {
+                CProductionStep ps = productionSteps[i];
+                bool allresourcesfound = true;
+                foreach (CProductionResource pr in ps.productionBuilding.resourcesNeeded)
+                    foreach (CProductionResource ie in resourceList)
+                        if (ie.name == pr.name)
+                            if (ps.productionBuilding.level * pr.amount > ie.amount)
+                                allresourcesfound = false;
+                if (!allresourcesfound)
+                {
+                    if(ps.simulationStep++>60 * 60)
+                        continue;
+                    for (int j = 0; j < productionSteps.Count - 1; j++)
+                    {
+                        if (productionSteps[j].simulationStep >= ps.simulationStep)
+                        {
+                            productionSteps[j] = ps;
+                            break;
+                        }
+                        productionSteps[j] = productionSteps[j + 1];
+                    }
+                    i--;
+                    continue;
+                }
+                else
+                {
+                    foreach (CProductionResource pr2 in ps.productionBuilding.resourcesNeeded)
+                        foreach (CProductionResource pr3 in resourceList)
+                            if (pr2.name == pr3.name)
+                                pr3.amount -= ps.productionBuilding.level * pr2.amount;
+                    foreach (CProductionResource pr2 in resourceList)
+                        if (pr2.name == ps.productionBuilding.resourceProduced.name)
+                            pr2.amount += ps.productionBuilding.level;
+                }
+                if (productionSteps[i].simulationStep > lastSimulationStep)
+                {
+                    double diff = new XDate(startDate.AddSeconds(productionSteps[i].simulationStep));
+                    ppl.Add(diff, findResourceByName(resource).amount);
+                    lastSimulationStep = productionSteps[i].simulationStep;
+                }
             }
+            
             return ppl;
         }
 
-        public class CProductionBuilding
+        public class CProductionBuilding : IEquatable<CProductionBuilding>
         {
             public string name;
-            private List<CBuildingEntryWrap> buildingProduce;
-            private List<CProductionBuilding> sourceBuildingGroup;
-            private List<CProductionBuilding> targetBuildingGroup;
+            public List<CBuildingEntryWrap> buildingProduce;
+            public List<CProductionBuilding> sourceBuildingGroup;
+            public List<CProductionBuilding> targetBuildingGroup;
             public CProductionResource resourceProduced;
             public List<CProductionResource> resourcesNeeded;
+
             public CProductionBuilding(string name)
             {
                 this.name = name;
@@ -155,14 +313,25 @@ IronSword
                 this.sourceBuildingGroup = new List<CProductionBuilding>();
                 this.targetBuildingGroup = new List<CProductionBuilding>();
             }
+            public bool Equals(CProductionBuilding obj)
+            {
+                if (obj.name == this.name)
+                    return true;
+                else
+                    return false;
+                //return this.name.Equals(obj.name);
+            }
             public CProductionBuilding()
             {
                 this.buildingProduce = new List<CBuildingEntryWrap>();
                 this.sourceBuildingGroup = new List<CProductionBuilding>();
                 this.targetBuildingGroup = new List<CProductionBuilding>();
             }
+
             public void addBuildingProduce(CBuildingEntryWrap bew)
             {
+                bew.resourcesNeeded = this.resourcesNeeded;
+                bew.resourceProduced = this.resourceProduced;
                 buildingProduce.Add(bew);
             }
             public void addSourceBuilding(CProductionBuilding pb)
@@ -173,81 +342,56 @@ IronSword
             {
                 this.targetBuildingGroup.Add(pb);
             }
-            public bool simulate(uint simulationStep)
+        }
+        public class CProductionStep
+        {
+            public uint simulationStep;
+            public CBuildingEntryWrap productionBuilding;
+            public CProductionStep(uint simulationStep, CBuildingEntryWrap productionBuilding)
             {
-                return simulate(simulationStep, false, false);
-            }
-            public bool simulate(uint simulationStep,bool nobackstep,bool noforwardstep)
-            {
-                if(!nobackstep)
-                foreach (CProductionBuilding pb in sourceBuildingGroup)
-                    if (!pb.simulate(simulationStep, false, true)) return false;
-                foreach (CBuildingEntryWrap be in buildingProduce)
-                {
-                    if (be.ePTime == -1) return false;
-                    if (be.sPTime == -1) return false;
-                    if (be.ePTime == 0) return false;
-                    if (be.sPTime == 0) return false;
-                    double PTime = (be.ePTime - be.sPTime)/1000;
-                    if ((simulationStep%PTime==0)||(be.stop))
-                    {
-                        bool allresourcesfound = true;
-                        foreach (CProductionResource pr in resourcesNeeded)
-                            foreach (CProductionResource ie in resourceList)
-                                if (ie.name == pr.name)
-                                    if (be.level * pr.amount > ie.amount)
-                                        allresourcesfound=false;
-                        if (allresourcesfound)
-                        {
-                            foreach (CProductionResource pr in resourcesNeeded)
-                                foreach (CProductionResource pr2 in resourceList)
-                                    if (pr2.name == pr.name)
-                                        pr2.amount -= be.level * pr.amount;
-                            foreach (CProductionResource pr2 in resourceList)
-                                if (pr2.name == resourceProduced.name)
-                                    pr2.amount += be.level;
-                            be.stop = false;
-                        }
-                        else
-                        {
-                            be.stop = true;
-                        }
-                    }
-                }
-
-                //ToDo: nicht gerade Optimal ... z.B. könnte Holz von Kohlefarbrik gebraucht werden, aber auch vom Sägewerk
-                //      Verbrauch,welcher die Produktion stoppen könnte wird aber nicht berücksichtigt
-                if (!noforwardstep)
-                    foreach (CProductionBuilding pb in targetBuildingGroup)
-                        if (!pb.simulate(simulationStep, true, false)) return false;
-                return true;
+                this.simulationStep = simulationStep;
+                this.productionBuilding = productionBuilding;
             }
         }
         public class CBuildingEntryWrap
         {
+            public List<CProductionResource> resourcesNeeded;
+            public CProductionResource resourceProduced;
             private CBuildingEntry buildingEntry;
+            private uint _level=0;
+            private double _sPTime = -1;
+            private double _ePTime = -1;
             public uint level
             {
                 get
                 {
-                    return buildingEntry.level;
+                    if (_level == 0)
+                        _level=buildingEntry.level;
+                    return _level;
                 }
             }
             public double sPTime
             {
                 get
                 {
-                    return buildingEntry.sPTime;
+                    if (this._sPTime == -1)
+                        this._sPTime = buildingEntry.sPTime;
+                    return this._sPTime;
                 }
             }
             public double ePTime
             {
                 get
                 {
-                    return buildingEntry.ePTime;
+                    if (this._ePTime == -1)
+                        this._ePTime = buildingEntry.ePTime;
+                    return this._ePTime;
                 }
             }
             public bool stop;
+            public CBuildingEntryWrap()
+            {
+            }
             public CBuildingEntryWrap(CBuildingEntry be)
             {
                 this.buildingEntry = be;
@@ -265,6 +409,13 @@ IronSword
             {
                 this.name = name;
                 this.amount = amount;
+            }
+        }
+        public class SimulationStepSort
+        {
+            public static int Comparison(CProductionStep x, CProductionStep y)
+            {
+                return x.simulationStep.CompareTo(y.simulationStep);
             }
         }
     }
