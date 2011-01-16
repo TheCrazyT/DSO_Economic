@@ -214,6 +214,9 @@ IronSword
                         }
                     }
                 }
+
+                //ToDo: nicht gerade Optimal ... z.B. könnte Holz von Kohlefarbrik gebraucht werden, aber auch vom Sägewerk
+                //      Verbrauch,welcher die Produktion stoppen könnte wird aber nicht berücksichtigt
                 if (!noforwardstep)
                     foreach (CProductionBuilding pb in targetBuildingGroup)
                         if (!pb.simulate(simulationStep, true, false)) return false;
