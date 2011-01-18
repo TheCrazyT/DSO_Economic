@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using ZedGraph;
-
 namespace DSO_Economic
 {
     public class CProduction
@@ -50,6 +49,10 @@ Wheel
 Carriage
 BronzeSword
 IronSword
+SteelSword
+TitaniumSword
+Bow
+Longbow
              */
             this.buildingGroup = new List<CProductionBuilding>();
             resourceList = new List<CProductionResource>();
@@ -90,6 +93,10 @@ IronSword
             resourceList.Add(new CProductionResource("Carriage", 0));
             resourceList.Add(new CProductionResource("BronzeSword", 0));
             resourceList.Add(new CProductionResource("IronSword", 0));
+            resourceList.Add(new CProductionResource("SteelSword", 0));
+            resourceList.Add(new CProductionResource("TitaniumSword", 0));
+            resourceList.Add(new CProductionResource("Bow", 0));
+            resourceList.Add(new CProductionResource("Longbow", 0));
         }
         public void init()
         {
@@ -319,7 +326,6 @@ IronSword
                     return true;
                 else
                     return false;
-                //return this.name.Equals(obj.name);
             }
             public CProductionBuilding()
             {

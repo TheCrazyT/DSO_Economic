@@ -12,6 +12,20 @@ namespace DSO_Economic
 
     static class Global
     {
+        public static bool connected
+        {
+            get
+            {
+                uint br = 0;
+                uint[] mem = new uint[1];
+                if (!Global.ReadProcessMemory(Main.Handle, MainClass, mem, 4, ref br)) return false;
+                if ((mem[0] > (uint)npswf.BaseAddress) && (mem[0] < (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                    return true;
+                return false;
+            }
+        }
+        public static MyProcessModule npswf = null;
+        public static uint MainClass = 0;
         public const uint LIST_MODULES_ALL = 0x03; 
         public static Process Main = null;
         public static List<String> itemnames;

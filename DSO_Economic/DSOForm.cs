@@ -19,10 +19,7 @@ namespace DSO_Economic
 
     public partial class DSOEForm : Form
     {
-        private static MyProcessModule npswf = null;
-        private static uint MainClass = 0;
         private static long max;
-        private static uint vartype;
         private static uint BuildingsPointer = 0;
 
         private static Dictionary<String, uint> Buildings;
@@ -33,13 +30,19 @@ namespace DSO_Economic
         private static bool trees = true;
         private static uint maxmemsize = 0x300000;
         private static uint maxsearchoffset = 0x1E0000;
-
+        private static bool buildingsonly = false;
 
         public DSOEForm()
         {
             InitializeComponent();
         }
-
+        private void disconnected()
+        {
+            BuildingRefresh.Enabled = false;
+            TimeLeft.Enabled = false;
+            ItemRefresh.Enabled = false;
+            status.Text = "Verbindung unterbrochen!";
+        }
         #region MemorySearchFunctions
         private void findMainClass(IntPtr handle, uint[] mem, uint start, uint size)
         {
@@ -51,7 +54,7 @@ namespace DSO_Economic
             for (i = 0; i < size - 0x5C; i += 4)
             {
                 v = mem[(i) / 4];
-                if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                if ((v < (uint)Global.npswf.BaseAddress) || (v > (uint)((uint)Global.npswf.BaseAddress + Global.npswf.ModuleMemorySize)))
                     continue;
                 if (mem[(i + 0x20) / 4] > 40)
                     continue;
@@ -81,14 +84,14 @@ namespace DSO_Economic
                 if (mem2[1] != 46) continue;
 
                 uint starttbl = mem2[3];
-                if ((starttbl > (uint)npswf.BaseAddress) && (starttbl < (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                if ((starttbl > (uint)Global.npswf.BaseAddress) && (starttbl < (uint)((uint)Global.npswf.BaseAddress + Global.npswf.ModuleMemorySize)))
                     continue;
 
                 uint sz = (uint)(4 * Global.itemnames.Count);
                 mem2 = new uint[Global.itemnames.Count + 1];
                 if (!Global.ReadProcessMemory(handle, starttbl + 8, mem2, sz, ref br)) continue;
 
-                MainClass = start + i;
+                Global.MainClass = start + i;
                 Debug.Print("Main class at: {0:x}", start + i);
 
 
@@ -104,7 +107,7 @@ namespace DSO_Economic
                 }
 
                 mem2 = new uint[1];
-                if (!Global.ReadProcessMemory(handle, MainClass + 0x88, mem2, 4, ref br)) continue;
+                if (!Global.ReadProcessMemory(handle, Global.MainClass + 0x88, mem2, 4, ref br)) continue;
 
                 if (!Global.ReadProcessMemory(handle, mem2[0] + 0x1a8, mem2, 4, ref br)) continue;
 
@@ -162,7 +165,7 @@ namespace DSO_Economic
             for (i = 0; i < size - 0x54; i += 4)
             {
                 v = mem[(i) / 4];
-                if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                if ((v < (uint)Global.npswf.BaseAddress) || (v > (uint)((uint)Global.npswf.BaseAddress + Global.npswf.ModuleMemorySize)))
                     continue;
 
                 uint y = mem[(i + 0x40) / 4];
@@ -251,6 +254,10 @@ namespace DSO_Economic
             #region ParamChecks
             foreach (string arg in args)
             {
+                if (arg == "/buildingsonly")
+                {
+                    buildingsonly = true;
+                }
                 if (arg == "/usecustomdb")
                 {
                     usecustomdb = true;
@@ -383,16 +390,16 @@ namespace DSO_Economic
                     {
                         if (mo.ModuleName.ToUpper() == "NPSWF32.DLL") //wird vom Firefox geladen
                         {
-                            npswf = mo;
+                            Global.npswf = mo;
                             break;
                         }
                         if ((mo.ModuleName.ToUpper().Substring(0, 5) == "FLASH") && (mo.ModuleName.ToUpper().Substring(mo.ModuleName.Length - 4, 4) == ".OCX")) //Flash*.ocx ... Internet Explorer ...
                         {
-                            npswf = mo;
+                            Global.npswf = mo;
                             break;
                         }
                     }
-                    if (npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
+                    if (Global.npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
 
                     uint size;
                     uint br = 0;
@@ -434,7 +441,7 @@ namespace DSO_Economic
 
                         findMainClass(p.Handle, mem, (uint)m.BaseAddress, (uint)m.RegionSize);
 
-                        //findItems(mem,(uint)m.BaseAddress, (uint)m.RegionSize);
+                        //ToDo: optimieren ... aus der Hauptklasse rausfischen
                         findResources(mem, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
 
                         address = (long)(m.BaseAddress + m.RegionSize);
@@ -465,7 +472,7 @@ namespace DSO_Economic
                 else
                     errorcode += "0";
 
-                if (npswf == null)
+                if (Global.npswf == null)
                     errorcode += "1";
                 else
                     errorcode += "0";
@@ -489,18 +496,26 @@ namespace DSO_Economic
             xs.Serialize(fs, Global.Production);
             fs.Close();*/
 
-            resources.DataSource = Global.resourceEntries;
-            resources.DisplayMember = "Text";
-            resources.ValueMember = "ID";
+            if (!buildingsonly)
+            {
+                resources.DataSource = Global.resourceEntries;
+                resources.DisplayMember = "Text";
+                resources.ValueMember = "ID";
 
-            items.DataSource = Global.itemEntries;
-            items.DisplayMember = "Text";
-            items.ValueMember = "ID";
+                items.DataSource = Global.itemEntries;
+                items.DisplayMember = "Text";
+                items.ValueMember = "ID";
 
-            refreshItemList();
-            ItemRefresh.Enabled = true;
+                refreshItemList();
+                ItemRefresh.Enabled = true;
+            }
+            else
+            {
+                tabCtrl.TabPages.Remove(tabPage_Items);
+                tabCtrl.TabPages.Remove(tabPage_Time);
+                tabPage_Buildings.Select();
+            }
             BuildingRefresh.Enabled = true;
-
 
             this.Visible = true;
             LDForm.Hide();
@@ -509,6 +524,11 @@ namespace DSO_Economic
 
         private void ItemRefresh_Tick(object sender, EventArgs e)
         {
+            if (!Global.connected)
+            {
+                disconnected();
+                return;
+            }
             ItemRefresh.Enabled = false;
             refreshItemList();
             Global.DbConnection3.Open();
@@ -565,6 +585,11 @@ namespace DSO_Economic
         }
         private void TimeLeft_Tick(object sender, EventArgs e)
         {
+            if (!Global.connected)
+            {
+                disconnected();
+                return;
+            }
             TimeLeft.Enabled = false;
             Global.DbConnection2.Open();
             int i = 0;
@@ -587,7 +612,7 @@ namespace DSO_Economic
 
         private void tabCtrl_Selected(object sender, TabControlEventArgs e)
         {
-            if (tabCtrl.SelectedTab == tabCtrl.TabPages[1])
+            if (tabCtrl.SelectedTab == tabPage_Time)
             {
                 foreach (CItemEntry ie in Global.itemEntries)
                 {
@@ -598,7 +623,8 @@ namespace DSO_Economic
                     ListViewItem liv = new ListViewItem(cols);
                     itemsOverview.Items.Add(liv);
                 }
-                TimeLeft.Enabled = true;
+                if(Global.connected)
+                    TimeLeft.Enabled = true;
             }
             else
             {
@@ -610,6 +636,8 @@ namespace DSO_Economic
         private void lst_buildings_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lst_buildings.SelectedIndex == -1) return;
+            if (!Global.connected) return;
+
             lst_production.Items.Clear();
             uint i = 0;
             foreach (CBuildingEntry b in Global.buildingEntries)
@@ -678,6 +706,11 @@ namespace DSO_Economic
 
         private void BuildingRefresh_Tick(object sender, EventArgs e)
         {
+            if (!Global.connected)
+            {
+                disconnected();
+                return;
+            }
             BuildingRefresh.Enabled = false;
             Global.DbConnection3.Open();
             foreach (CBuildingEntry b in Global.buildingEntries)

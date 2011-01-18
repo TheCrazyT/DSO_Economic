@@ -31,18 +31,18 @@
             this.components = new System.ComponentModel.Container();
             this.ItemRefresh = new System.Windows.Forms.Timer(this.components);
             this.tabCtrl = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage_Items = new System.Windows.Forms.TabPage();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.resources = new System.Windows.Forms.ListBox();
             this.graph = new ZedGraph.ZedGraphControl();
             this.items = new System.Windows.Forms.ListBox();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.tabPage_Time = new System.Windows.Forms.TabPage();
             this.itemsOverview = new System.Windows.Forms.ListView();
             this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tabPage_Buildings = new System.Windows.Forms.TabPage();
             this.btn_export = new System.Windows.Forms.Button();
             this.lst_production = new System.Windows.Forms.ListView();
             this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
@@ -52,10 +52,13 @@
             this.lst_buildings = new System.Windows.Forms.ListBox();
             this.TimeLeft = new System.Windows.Forms.Timer(this.components);
             this.BuildingRefresh = new System.Windows.Forms.Timer(this.components);
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.status = new System.Windows.Forms.ToolStripStatusLabel();
             this.tabCtrl.SuspendLayout();
-            this.tabPage1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
-            this.tabPage3.SuspendLayout();
+            this.tabPage_Items.SuspendLayout();
+            this.tabPage_Time.SuspendLayout();
+            this.tabPage_Buildings.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // ItemRefresh
@@ -68,30 +71,30 @@
             this.tabCtrl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.tabCtrl.Controls.Add(this.tabPage1);
-            this.tabCtrl.Controls.Add(this.tabPage2);
-            this.tabCtrl.Controls.Add(this.tabPage3);
+            this.tabCtrl.Controls.Add(this.tabPage_Items);
+            this.tabCtrl.Controls.Add(this.tabPage_Time);
+            this.tabCtrl.Controls.Add(this.tabPage_Buildings);
             this.tabCtrl.Location = new System.Drawing.Point(1, 1);
             this.tabCtrl.Name = "tabCtrl";
             this.tabCtrl.SelectedIndex = 0;
-            this.tabCtrl.Size = new System.Drawing.Size(760, 587);
+            this.tabCtrl.Size = new System.Drawing.Size(758, 575);
             this.tabCtrl.TabIndex = 5;
             this.tabCtrl.Selected += new System.Windows.Forms.TabControlEventHandler(this.tabCtrl_Selected);
             // 
-            // tabPage1
+            // tabPage_Items
             // 
-            this.tabPage1.Controls.Add(this.label2);
-            this.tabPage1.Controls.Add(this.label1);
-            this.tabPage1.Controls.Add(this.resources);
-            this.tabPage1.Controls.Add(this.graph);
-            this.tabPage1.Controls.Add(this.items);
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(752, 561);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Graph";
-            this.tabPage1.UseVisualStyleBackColor = true;
+            this.tabPage_Items.Controls.Add(this.label2);
+            this.tabPage_Items.Controls.Add(this.label1);
+            this.tabPage_Items.Controls.Add(this.resources);
+            this.tabPage_Items.Controls.Add(this.graph);
+            this.tabPage_Items.Controls.Add(this.items);
+            this.tabPage_Items.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_Items.Name = "tabPage_Items";
+            this.tabPage_Items.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_Items.Size = new System.Drawing.Size(750, 549);
+            this.tabPage_Items.TabIndex = 0;
+            this.tabPage_Items.Text = "Graph";
+            this.tabPage_Items.UseVisualStyleBackColor = true;
             // 
             // label2
             // 
@@ -118,7 +121,7 @@
             this.resources.FormattingEnabled = true;
             this.resources.Location = new System.Drawing.Point(137, 31);
             this.resources.Name = "resources";
-            this.resources.Size = new System.Drawing.Size(124, 524);
+            this.resources.Size = new System.Drawing.Size(124, 511);
             this.resources.TabIndex = 7;
             // 
             // graph
@@ -137,7 +140,7 @@
             this.graph.ScrollMinX = 0;
             this.graph.ScrollMinY = 0;
             this.graph.ScrollMinY2 = 0;
-            this.graph.Size = new System.Drawing.Size(476, 550);
+            this.graph.Size = new System.Drawing.Size(474, 538);
             this.graph.TabIndex = 6;
             // 
             // items
@@ -147,20 +150,20 @@
             this.items.FormattingEnabled = true;
             this.items.Location = new System.Drawing.Point(14, 31);
             this.items.Name = "items";
-            this.items.Size = new System.Drawing.Size(117, 524);
+            this.items.Size = new System.Drawing.Size(117, 511);
             this.items.TabIndex = 5;
             this.items.SelectedValueChanged += new System.EventHandler(this.items_SelectedValueChanged);
             // 
-            // tabPage2
+            // tabPage_Time
             // 
-            this.tabPage2.Controls.Add(this.itemsOverview);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(752, 561);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Zeitübersicht";
-            this.tabPage2.UseVisualStyleBackColor = true;
+            this.tabPage_Time.Controls.Add(this.itemsOverview);
+            this.tabPage_Time.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_Time.Name = "tabPage_Time";
+            this.tabPage_Time.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_Time.Size = new System.Drawing.Size(752, 561);
+            this.tabPage_Time.TabIndex = 1;
+            this.tabPage_Time.Text = "Zeitübersicht";
+            this.tabPage_Time.UseVisualStyleBackColor = true;
             // 
             // itemsOverview
             // 
@@ -191,17 +194,17 @@
             this.columnHeader3.Text = "Zeit bis Lager voll";
             this.columnHeader3.Width = 160;
             // 
-            // tabPage3
+            // tabPage_Buildings
             // 
-            this.tabPage3.Controls.Add(this.btn_export);
-            this.tabPage3.Controls.Add(this.lst_production);
-            this.tabPage3.Controls.Add(this.lst_buildings);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Size = new System.Drawing.Size(752, 561);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Gebäude";
-            this.tabPage3.UseVisualStyleBackColor = true;
+            this.tabPage_Buildings.Controls.Add(this.btn_export);
+            this.tabPage_Buildings.Controls.Add(this.lst_production);
+            this.tabPage_Buildings.Controls.Add(this.lst_buildings);
+            this.tabPage_Buildings.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_Buildings.Name = "tabPage_Buildings";
+            this.tabPage_Buildings.Size = new System.Drawing.Size(752, 561);
+            this.tabPage_Buildings.TabIndex = 2;
+            this.tabPage_Buildings.Text = "Gebäude";
+            this.tabPage_Buildings.UseVisualStyleBackColor = true;
             // 
             // btn_export
             // 
@@ -265,20 +268,39 @@
             this.BuildingRefresh.Interval = 60000;
             this.BuildingRefresh.Tick += new System.EventHandler(this.BuildingRefresh_Tick);
             // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.status});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 579);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(759, 22);
+            this.statusStrip1.TabIndex = 11;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // status
+            // 
+            this.status.Name = "status";
+            this.status.Size = new System.Drawing.Size(0, 17);
+            // 
             // DSOEForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(759, 584);
+            this.ClientSize = new System.Drawing.Size(759, 601);
+            this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.tabCtrl);
             this.Name = "DSOEForm";
             this.Load += new System.EventHandler(this.DSOEForm_Load);
             this.tabCtrl.ResumeLayout(false);
-            this.tabPage1.ResumeLayout(false);
-            this.tabPage1.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
-            this.tabPage3.ResumeLayout(false);
+            this.tabPage_Items.ResumeLayout(false);
+            this.tabPage_Items.PerformLayout();
+            this.tabPage_Time.ResumeLayout(false);
+            this.tabPage_Buildings.ResumeLayout(false);
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -286,19 +308,19 @@
 
         private System.Windows.Forms.Timer ItemRefresh;
         private System.Windows.Forms.TabControl tabCtrl;
-        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage_Items;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ListBox resources;
         private ZedGraph.ZedGraphControl graph;
         private System.Windows.Forms.ListBox items;
-        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.TabPage tabPage_Time;
         private System.Windows.Forms.Timer TimeLeft;
         private System.Windows.Forms.ListView itemsOverview;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader3;
-        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.TabPage tabPage_Buildings;
         private System.Windows.Forms.ListBox lst_buildings;
         private System.Windows.Forms.ListView lst_production;
         private System.Windows.Forms.ColumnHeader columnHeader4;
@@ -307,6 +329,8 @@
         private System.Windows.Forms.Button btn_export;
         private System.Windows.Forms.ColumnHeader columnHeader7;
         private System.Windows.Forms.Timer BuildingRefresh;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel status;
     }
 }
 
