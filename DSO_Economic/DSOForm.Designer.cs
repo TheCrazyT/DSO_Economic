@@ -77,7 +77,7 @@
             this.tabCtrl.Location = new System.Drawing.Point(1, 1);
             this.tabCtrl.Name = "tabCtrl";
             this.tabCtrl.SelectedIndex = 0;
-            this.tabCtrl.Size = new System.Drawing.Size(758, 575);
+            this.tabCtrl.Size = new System.Drawing.Size(758, 620);
             this.tabCtrl.TabIndex = 5;
             this.tabCtrl.Selected += new System.Windows.Forms.TabControlEventHandler(this.tabCtrl_Selected);
             // 
@@ -160,13 +160,16 @@
             this.tabPage_Time.Location = new System.Drawing.Point(4, 22);
             this.tabPage_Time.Name = "tabPage_Time";
             this.tabPage_Time.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_Time.Size = new System.Drawing.Size(752, 561);
+            this.tabPage_Time.Size = new System.Drawing.Size(750, 594);
             this.tabPage_Time.TabIndex = 1;
             this.tabPage_Time.Text = "Zeitübersicht";
             this.tabPage_Time.UseVisualStyleBackColor = true;
             // 
             // itemsOverview
             // 
+            this.itemsOverview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.itemsOverview.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2,
@@ -174,7 +177,7 @@
             this.itemsOverview.GridLines = true;
             this.itemsOverview.Location = new System.Drawing.Point(0, 0);
             this.itemsOverview.Name = "itemsOverview";
-            this.itemsOverview.Size = new System.Drawing.Size(749, 555);
+            this.itemsOverview.Size = new System.Drawing.Size(749, 600);
             this.itemsOverview.TabIndex = 0;
             this.itemsOverview.UseCompatibleStateImageBehavior = false;
             this.itemsOverview.View = System.Windows.Forms.View.Details;
@@ -201,7 +204,7 @@
             this.tabPage_Buildings.Controls.Add(this.lst_buildings);
             this.tabPage_Buildings.Location = new System.Drawing.Point(4, 22);
             this.tabPage_Buildings.Name = "tabPage_Buildings";
-            this.tabPage_Buildings.Size = new System.Drawing.Size(752, 561);
+            this.tabPage_Buildings.Size = new System.Drawing.Size(750, 549);
             this.tabPage_Buildings.TabIndex = 2;
             this.tabPage_Buildings.Text = "Gebäude";
             this.tabPage_Buildings.UseVisualStyleBackColor = true;
@@ -272,7 +275,7 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.status});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 579);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 624);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(759, 22);
             this.statusStrip1.TabIndex = 11;
@@ -287,7 +290,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(759, 601);
+            this.ClientSize = new System.Drawing.Size(759, 646);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.tabCtrl);
             this.Name = "DSOEForm";

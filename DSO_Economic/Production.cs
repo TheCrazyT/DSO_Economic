@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ZedGraph;
+using System.Diagnostics;
 namespace DSO_Economic
 {
     public class CProduction
@@ -116,10 +117,21 @@ Longbow
         private List<CProductionBuilding> getBuildingChain(string resource)
         {
             List<CProductionBuilding> pblist = new List<CProductionBuilding>();
+            bool producingbuildingfound = false;
             foreach (CProductionBuilding pb in findBuildingGroupByResProduced(resource))
+            {
+                if (pb.buildingProduce.Count != 0) producingbuildingfound = true;
                 pblist.Add(pb);
+            }
             if (pblist.Count == 0)
                 return new List<CProductionBuilding>();
+
+            if (!producingbuildingfound)
+            {
+                Debug.Print("createProductionSteps for {0} failed, production building missing",resource);
+                return new List<CProductionBuilding>(); //Lücke in Produktionskette ...
+            }
+
             int oldcount = pblist.Count;
             do
             {
@@ -163,6 +175,7 @@ Longbow
                 resourceList[i].amount = Global.itemEntries[i].amount;
             max = Global.itemEntries[0].max;
             foreach (CProductionBuilding pb in getBuildingChain(resource))
+            {
                 foreach (CBuildingEntryWrap bew in pb.buildingProduce)
                 {
                     if ((bew.ePTime == -1) || (bew.sPTime == -1))
@@ -175,6 +188,7 @@ Longbow
                         productionSteps.Add(new CProductionStep(i, bew));
 
                 }
+            }
             productionSteps.Sort(SimulationStepSort.Comparison);
             if (productionSteps.Count == 0) return false;
             return true;
@@ -191,8 +205,10 @@ Longbow
         public double findLimit(string resource,bool full)
         {
             uint lastSimulationStep = 0;
-            uint timelimit=8 * 60 * 60;
+            uint timelimit=12 * 60 * 60;
             if (!createProductionSteps(resource, timelimit)) return -1;
+
+            Debug.Print("Processing {0} with {1} production steps", resource,productionSteps.Count);
 
             for (int i = 0; i < productionSteps.Count; i++)
             {
@@ -256,7 +272,7 @@ Longbow
             uint lastSimulationStep = 0;
 
             if (!createProductionSteps(resource)) return new PointPairList();
-
+            
             for (int i = 0; i < productionSteps.Count; i++)
             {
                 CProductionStep ps = productionSteps[i];
@@ -381,7 +397,10 @@ Longbow
                 get
                 {
                     if (this._sPTime == -1)
+                    {
                         this._sPTime = buildingEntry.sPTime;
+                        this._ePTime = buildingEntry.ePTime;
+                    }
                     return this._sPTime;
                 }
             }
@@ -390,7 +409,10 @@ Longbow
                 get
                 {
                     if (this._ePTime == -1)
+                    {
+                        this._sPTime = buildingEntry.sPTime;
                         this._ePTime = buildingEntry.ePTime;
+                    }
                     return this._ePTime;
                 }
             }
