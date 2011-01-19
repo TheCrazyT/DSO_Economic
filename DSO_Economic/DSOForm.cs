@@ -19,18 +19,7 @@ namespace DSO_Economic
 
     public partial class DSOEForm : Form
     {
-        private static long max;
-        private static uint BuildingsPointer = 0;
 
-        private static Dictionary<String, uint> Buildings;
-
-        private static bool usecustomdb = false;
-        private static bool usetxt = false;
-        private static bool usesqlite = false;
-        private static bool trees = true;
-        private static uint maxmemsize = 0x300000;
-        private static uint maxsearchoffset = 0x1E0000;
-        private static bool buildingsonly = false;
 
         public DSOEForm()
         {
@@ -42,160 +31,9 @@ namespace DSO_Economic
             TimeLeft.Enabled = false;
             ItemRefresh.Enabled = false;
             status.Text = "Verbindung unterbrochen!";
+            btn_reconnect.Visible = true;
         }
-        #region MemorySearchFunctions
-        private void findMainClass(IntPtr handle, uint[] mem, uint start, uint size)
-        {
-            Application.DoEvents();
-            uint i = 0;
-            uint v;
-            uint w;
-
-            for (i = 0; i < size - 0x5C; i += 4)
-            {
-                v = mem[(i) / 4];
-                if ((v < (uint)Global.npswf.BaseAddress) || (v > (uint)((uint)Global.npswf.BaseAddress + Global.npswf.ModuleMemorySize)))
-                    continue;
-                if (mem[(i + 0x20) / 4] > 40)
-                    continue;
-                if (mem[(i + 0x28) / 4] > 40)
-                    continue;
-                if (mem[(i + 0x2C) / 4] == 0)
-                    continue;
-                if (mem[(i + 0x30) / 4] > 40)
-                    continue;
-                if (mem[(i + 0x3C) / 4] > 40)
-                    continue;
-                v = mem[(i + 0x38) / 4];
-                w = mem[(i + 0x40) / 4];
-                if (w < v) continue;
-                if (v > 1000) continue;
-                if (w > 1000) continue;
-                if (w == 0) continue;
-
-                w = mem[(i + 0x5c) / 4];
-                w += 0x10;
-
-                uint br = 0;
-                uint[] mem2 = new uint[4];
-                if (!Global.ReadProcessMemory(handle, w, mem2, 4 * 4, ref br)) continue;
-
-                if (mem2[0] != 44) continue;
-                if (mem2[1] != 46) continue;
-
-                uint starttbl = mem2[3];
-                if ((starttbl > (uint)Global.npswf.BaseAddress) && (starttbl < (uint)((uint)Global.npswf.BaseAddress + Global.npswf.ModuleMemorySize)))
-                    continue;
-
-                uint sz = (uint)(4 * Global.itemnames.Count);
-                mem2 = new uint[Global.itemnames.Count + 1];
-                if (!Global.ReadProcessMemory(handle, starttbl + 8, mem2, sz, ref br)) continue;
-
-                Global.MainClass = start + i;
-                Debug.Print("Main class at: {0:x}", start + i);
-
-
-                Debug.Print("Table at: {0:x}", starttbl);
-                Global.itemEntries = new List<CItemEntry>();
-                CItemEntry.reset();
-                for (int x = 0; x < Global.itemnames.Count; x++)
-                {
-                    CItemEntry ie = new CItemEntry(mem2[x] & 0xFFFFFFF8);
-                    if (x == 0) max = ie.max;
-                    Debug.Print(ie.internName);
-                    Global.itemEntries.Add(ie);
-                }
-
-                mem2 = new uint[1];
-                if (!Global.ReadProcessMemory(handle, Global.MainClass + 0x88, mem2, 4, ref br)) continue;
-
-                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x1a8, mem2, 4, ref br)) continue;
-
-                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x68, mem2, 4, ref br)) continue;
-
-                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x54, mem2, 4, ref br)) continue;
-
-                uint[] mem3 = new uint[4];
-
-                if (!Global.ReadProcessMemory(handle, mem2[0] + 0x10, mem3, 0x10, ref br)) continue;
-
-                uint cnt = mem3[0];
-                BuildingsPointer = mem3[3];
-
-                mem2 = new uint[cnt];
-                if (!Global.ReadProcessMemory(handle, BuildingsPointer, mem2, cnt * 4, ref br)) continue;
-
-                Global.buildingEntries = new List<CBuildingEntry>();
-                Buildings = new Dictionary<String, uint>();
-
-                Global.DbConnection3.Open();
-                for (int x = 0; x < cnt; x++)
-                {
-                    CBuildingEntry BE = new CBuildingEntry(mem2[x] & 0xFFFFFFF8);
-                    Debug.Print("Building at: {0:x}", mem2[x] & 0xFFFFFFF8);
-                    Debug.Print("{0} {1} {2}", BE.Name, BE.X, BE.Y);
-                    if (!Buildings.ContainsKey(BE.Name))
-                        Buildings.Add(BE.Name, 1);
-                    else
-                        Buildings[BE.Name]++;
-                    Global.buildingEntries.Add(BE);
-                }
-                Global.DbConnection3.Close();
-
-                lst_buildings.DisplayMember = "Name";
-                lst_buildings.ValueMember = "Value";
-
-                foreach (String name in Buildings.Keys)
-                {
-                    CNameValue NV = new CNameValue(name + " : " + Buildings[name], name);
-                    lst_buildings.Items.Add(NV);
-                }
-                Debug.Print("Building array at: {0:x}", BuildingsPointer);
-            }
-            return;
-        }
-        private void findResources(uint[] mem, uint start, uint size)
-        {
-            Application.DoEvents();
-
-            uint i = 0;
-            uint v;
-            uint w;
-
-            for (i = 0; i < size - 0x54; i += 4)
-            {
-                v = mem[(i) / 4];
-                if ((v < (uint)Global.npswf.BaseAddress) || (v > (uint)((uint)Global.npswf.BaseAddress + Global.npswf.ModuleMemorySize)))
-                    continue;
-
-                uint y = mem[(i + 0x40) / 4];
-                if (y != 2)
-                    continue;
-
-                v = mem[(i + 0x44) / 4];
-                if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5))
-                    continue;
-
-
-                w = mem[(i + 0x48) / 4];
-                if (w > 5000)
-                    continue;
-
-                v = mem[(i + 0x54) / 4];
-                if (((v == 5) || (v == 25)) && (!trees))
-                    continue;
-
-                if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
-                    if (v == w)
-                        continue;
-
-
-                Global.resourceEntries.Add(new CResourceEntry(start + i + 0x40));
-            }
-            return;
-        }
-
-        #endregion
+        
 
 
         private void refreshItemList()
@@ -245,7 +83,8 @@ namespace DSO_Economic
         private void DSOEForm_Load(object sender, EventArgs e)
         {
             #region init
-
+            status.Text = "";
+            btn_reconnect.Visible = false;
             this.Visible = false;
             this.Text = "DSO Economic Version " + System.Configuration.ConfigurationManager.AppSettings["Version"];
             string[] args = Environment.GetCommandLineArgs();
@@ -256,19 +95,19 @@ namespace DSO_Economic
             {
                 if (arg == "/buildingsonly")
                 {
-                    buildingsonly = true;
+                    Params.buildingsonly = true;
                 }
                 if (arg == "/usecustomdb")
                 {
-                    usecustomdb = true;
+                    Params.usecustomdb = true;
                 }
                 if (arg == "/usesqlitedb")
                 {
-                    usesqlite = true;
+                    Params.usesqlite = true;
                 }
-                if ((arg == "/usetxt") || (usetxt))
+                if ((arg == "/usetxt") || (Params.usetxt))
                 {
-                    usetxt = true;
+                    Params.usetxt = true;
                     Global.tblext = ".txt";
                 }
                 if (arg == "/timer")
@@ -294,7 +133,7 @@ namespace DSO_Economic
                     {
                         try
                         {
-                            maxmemsize = uint.Parse(args[h + 1]);
+                            Params.maxmemsize = uint.Parse(args[h + 1]);
                         }
                         catch (Exception e2)
                         {
@@ -310,7 +149,7 @@ namespace DSO_Economic
                     {
                         try
                         {
-                            maxsearchoffset = uint.Parse(args[h + 1]);
+                            Params.maxsearchoffset = uint.Parse(args[h + 1]);
                         }
                         catch (Exception e2)
                         {
@@ -320,35 +159,32 @@ namespace DSO_Economic
                         }
                     }
                 }
-                if (arg == "/notrees") trees = false;
+                if (arg == "/notrees") Params.trees = false;
                 h++;
             }
             #endregion
 
 
-            uint MaxAddress = 0x7fffffff;
-            long address = 0;
-            bool result;
 
 
             Loading LDForm = new Loading();
             LDForm.Show();
 
-            if (usesqlite)
+            if (Params.usesqlite)
             {
                 Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
                 Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
                 Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
             }
             else
-                if (usecustomdb)
+                if (Params.usecustomdb)
                 {
                     Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
                     Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
                     Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
                 }
                 else
-                    if (!usetxt)
+                    if (!Params.usetxt)
                     {
                         Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
                         Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
@@ -376,111 +212,22 @@ namespace DSO_Economic
             Global.DbConnection.Close();
 
 
-            Global.itemEntries = new List<CItemEntry>();
-            Global.resourceEntries = new List<CResourceEntry>();
-            string[] processes = new string[] { "plugin-container", "iexplore" }; //plugin-container für Chrome und Firefox ... IE macht wieder sein eigenes Ding
-            foreach (string pname in processes)
+            if(!Global.connect())
             {
-                Process[] pList = Process.GetProcessesByName(pname);
-                foreach (Process p in pList)
-                {
-                    Global.Main = p;
-
-                    foreach (MyProcessModule mo in Global.GetProcessModules(p))
-                    {
-                        if (mo.ModuleName.ToUpper() == "NPSWF32.DLL") //wird vom Firefox geladen
-                        {
-                            Global.npswf = mo;
-                            break;
-                        }
-                        if ((mo.ModuleName.ToUpper().Substring(0, 5) == "FLASH") && (mo.ModuleName.ToUpper().Substring(mo.ModuleName.Length - 4, 4) == ".OCX")) //Flash*.ocx ... Internet Explorer ...
-                        {
-                            Global.npswf = mo;
-                            break;
-                        }
-                    }
-                    if (Global.npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
-
-                    uint size;
-                    uint br = 0;
-                    MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
-                    do
-                    {
-                        result = Global.VirtualQueryEx(p.Handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
-                        if (!result) break; //am ende angekommen ... wir können aufhören
-                        if (m.AllocationBase == 0)
-                        {
-                            address = (long)(m.BaseAddress + m.RegionSize);
-                            continue;
-                        }
-
-                        Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, m.BaseAddress + (uint)m.RegionSize, m.RegionSize);
-                        size = (uint)m.RegionSize;
-                        if (size > maxmemsize)
-                        {
-                            address = (long)(m.BaseAddress + m.RegionSize);
-                            continue;
-                        }
-                        uint[] mem = new uint[size / 4];
-                        if (!Global.ReadProcessMemory(p.Handle, (IntPtr)m.BaseAddress, mem, size, ref br))
-                        {
-                            if (Global.GetLastError() == 0x12b) //nur einen Teil ausgelesen
-                                size = br;
-                            else
-                            {
-                                Debug.Print("Last error:{0:x}", Global.GetLastError());
-                                address = (long)(m.BaseAddress + m.RegionSize);
-                                continue;
-                            }
-                        }
-                        if (size == 0)
-                        {
-                            address = (long)(m.BaseAddress + m.RegionSize);
-                            continue;
-                        }
-
-                        findMainClass(p.Handle, mem, (uint)m.BaseAddress, (uint)m.RegionSize);
-
-                        //ToDo: optimieren ... aus der Hauptklasse rausfischen
-                        findResources(mem, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
-
-                        address = (long)(m.BaseAddress + m.RegionSize);
-
-                    } while (address <= MaxAddress);
-
-                    if ((Global.Main != null) && (Global.itemEntries.Count > 0)) break;
-                }
-                if ((Global.Main != null) && (Global.itemEntries.Count > 0)) break;
-            }
-            #endregion
-
-            if ((Global.Main == null) || (Global.itemEntries.Count == 0))
-            {
-                string errorcode = "";
-                if (Global.Main == null)
-                    errorcode += "1";
-                else
-                    errorcode += "0";
-
-                if (Global.itemEntries.Count == 0)
-                    errorcode += "1";
-                else
-                    errorcode += "0";
-
-                if (Global.resourceEntries.Count == 0) //kein KO-Kriterium, aber dennoch hilfreich bei der Fehlersuche
-                    errorcode += "1";
-                else
-                    errorcode += "0";
-
-                if (Global.npswf == null)
-                    errorcode += "1";
-                else
-                    errorcode += "0";
-
-                MessageBox.Show("Fehlercode: " + errorcode + "\nDaten konnten nicht abgefangen werden.\nEntweder ist das Spiel noch nicht gestartet, oder die Version dieses Programms ist veraltet!", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Application.Exit();
                 return;
             }
+
+
+            lst_buildings.DisplayMember = "Name";
+            lst_buildings.ValueMember = "Value";
+
+            foreach (String name in Global.Buildings.Keys)
+            {
+                CNameValue NV = new CNameValue(name + " : " + Global.Buildings[name], name);
+                lst_buildings.Items.Add(NV);
+            }
+            Debug.Print("Building array at: {0:x}", Global.BuildingsPointer);
 
 
             XmlSerializer xs = new XmlSerializer(typeof(CProduction));
@@ -496,7 +243,7 @@ namespace DSO_Economic
             xs.Serialize(fs, Global.Production);
             fs.Close();*/
 
-            if (!buildingsonly)
+            if (!Params.buildingsonly)
             {
                 resources.DataSource = Global.resourceEntries;
                 resources.DisplayMember = "Text";
@@ -516,6 +263,7 @@ namespace DSO_Economic
                 tabPage_Buildings.Select();
             }
             BuildingRefresh.Enabled = true;
+            #endregion
 
             this.Visible = true;
             LDForm.Hide();
@@ -590,8 +338,9 @@ namespace DSO_Economic
                 disconnected();
                 return;
             }
+            this.Cursor = Cursors.WaitCursor;
             TimeLeft.Enabled = false;
-            Global.DbConnection2.Open();
+            
             int i = 0;
             DateTime dt = DateTime.Now;
             foreach (ListViewItem liv in itemsOverview.Items)
@@ -606,7 +355,8 @@ namespace DSO_Economic
                 Debug.Print("Fetch Limit for 1 item {1} took {0} seconds.", (DateTime.Now - dt).TotalSeconds,resname); 
                 Application.DoEvents();
             }
-            Global.DbConnection2.Close();
+            
+            this.Cursor = Cursors.Default;
             TimeLeft.Enabled = true;
         }
 
@@ -623,8 +373,12 @@ namespace DSO_Economic
                     ListViewItem liv = new ListViewItem(cols);
                     itemsOverview.Items.Add(liv);
                 }
-                if(Global.connected)
+                if (Global.connected)
+                {
+                    Application.DoEvents();
+                    TimeLeft_Tick(null, null);
                     TimeLeft.Enabled = true;
+                }
             }
             else
             {
@@ -717,6 +471,37 @@ namespace DSO_Economic
                 b.save();
             Global.DbConnection3.Close();
             BuildingRefresh.Enabled = true;
+        }
+
+        private void btn_reconnect_Click(object sender, EventArgs e)
+        {
+            if (Global.connect())
+            {
+                this.status.Text = "";
+                btn_reconnect.Visible = false;
+                if (!Params.buildingsonly)
+                {
+                    resources.DataSource = Global.resourceEntries;
+                    resources.DisplayMember = "Text";
+                    resources.ValueMember = "ID";
+
+                    items.DataSource = Global.itemEntries;
+                    items.DisplayMember = "Text";
+                    items.ValueMember = "ID";
+
+                    refreshItemList();
+                    ItemRefresh.Enabled = true;
+                }
+                else
+                {
+                    tabCtrl.TabPages.Remove(tabPage_Items);
+                    tabCtrl.TabPages.Remove(tabPage_Time);
+                    tabPage_Buildings.Select();
+                }
+                BuildingRefresh.Enabled = true;
+                return;
+            }
+            this.status.Text = "keine Verbindung!";
         }
 
     }

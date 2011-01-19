@@ -54,6 +54,7 @@
             this.BuildingRefresh = new System.Windows.Forms.Timer(this.components);
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.status = new System.Windows.Forms.ToolStripStatusLabel();
+            this.btn_reconnect = new System.Windows.Forms.Button();
             this.tabCtrl.SuspendLayout();
             this.tabPage_Items.SuspendLayout();
             this.tabPage_Time.SuspendLayout();
@@ -91,7 +92,7 @@
             this.tabPage_Items.Location = new System.Drawing.Point(4, 22);
             this.tabPage_Items.Name = "tabPage_Items";
             this.tabPage_Items.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_Items.Size = new System.Drawing.Size(750, 549);
+            this.tabPage_Items.Size = new System.Drawing.Size(750, 594);
             this.tabPage_Items.TabIndex = 0;
             this.tabPage_Items.Text = "Graph";
             this.tabPage_Items.UseVisualStyleBackColor = true;
@@ -204,7 +205,7 @@
             this.tabPage_Buildings.Controls.Add(this.lst_buildings);
             this.tabPage_Buildings.Location = new System.Drawing.Point(4, 22);
             this.tabPage_Buildings.Name = "tabPage_Buildings";
-            this.tabPage_Buildings.Size = new System.Drawing.Size(750, 549);
+            this.tabPage_Buildings.Size = new System.Drawing.Size(750, 594);
             this.tabPage_Buildings.TabIndex = 2;
             this.tabPage_Buildings.Text = "Gebäude";
             this.tabPage_Buildings.UseVisualStyleBackColor = true;
@@ -284,13 +285,25 @@
             // status
             // 
             this.status.Name = "status";
-            this.status.Size = new System.Drawing.Size(0, 17);
+            this.status.Size = new System.Drawing.Size(133, 17);
+            this.status.Text = "Verbindung unterbrochen!";
+            // 
+            // btn_reconnect
+            // 
+            this.btn_reconnect.Location = new System.Drawing.Point(142, 624);
+            this.btn_reconnect.Name = "btn_reconnect";
+            this.btn_reconnect.Size = new System.Drawing.Size(87, 22);
+            this.btn_reconnect.TabIndex = 12;
+            this.btn_reconnect.Text = "neu verbinden";
+            this.btn_reconnect.UseVisualStyleBackColor = true;
+            this.btn_reconnect.Click += new System.EventHandler(this.btn_reconnect_Click);
             // 
             // DSOEForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(759, 646);
+            this.Controls.Add(this.btn_reconnect);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.tabCtrl);
             this.Name = "DSOEForm";
@@ -334,6 +347,7 @@
         private System.Windows.Forms.Timer BuildingRefresh;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel status;
+        private System.Windows.Forms.Button btn_reconnect;
     }
 }
 
