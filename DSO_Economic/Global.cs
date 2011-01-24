@@ -12,6 +12,7 @@ namespace DSO_Economic
 
     static class Global
     {
+        public static bool isLinux;
         public static bool connected
         {
             get
@@ -35,7 +36,7 @@ namespace DSO_Economic
         public static MyProcessModule npswf = null;
         public static uint MainClass = 0;
         public const uint LIST_MODULES_ALL = 0x03; 
-        public static Process Main = null;
+        public static MyProcess Main = null;
         public static List<String> itemnames;
         public static OdbcConnection DbConnection;
         public static OdbcConnection DbConnection2;
@@ -48,63 +49,133 @@ namespace DSO_Economic
         public static string tblext = "";
         public static CProduction Production;
 
-        [DllImport("Kernel32.dll")]
-        static public extern bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength);
 
-        [DllImport("Kernel32.dll")]
-        static public extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+        static public bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength)
+        {
+            if (!isLinux)
+                return Windows.VirtualQueryEx(hProcess, lpAddress, out lpBuffer, dwLength);
+            else
+                return Linux.VirtualQueryEx(hProcess, lpAddress, out lpBuffer, dwLength);
+        }
 
-        [DllImport("Kernel32.dll")]
-        static public extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+        static public bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead)
+        {
+            if (!isLinux)
+                return Windows.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+            else
+                return Linux.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+        }
 
-        [DllImport("Kernel32.dll")]
-        static public extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+        static public bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, byte[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead)
+        {
+            if (!isLinux)
+                return Windows.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+            else
+                return Linux.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+        }
 
-        [DllImport("Kernel32.dll")]
-        static public extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+        static public bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead)
+        {
+            if (!isLinux)
+                return Windows.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+            else
+                return Linux.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+        }
 
-        [DllImport("Kernel32.dll")]
-        static public extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, ulong[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+        static public bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, uint[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead)
+        {
+            if (!isLinux)
+                return Windows.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+            else
+                return Linux.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+        }
 
-        [DllImport("Kernel32.dll")]
-        static public extern bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, double[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead);
+        static public bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, ulong[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead)
+        {
+            if (!isLinux)
+                return Windows.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+            else
+                return Linux.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+        }
 
-        [DllImport("Kernel32.dll")]
-        static public extern uint GetLastError();
+        static public bool ReadProcessMemory(IntPtr hProcess, uint lpBaseAddress, double[] lpBuffer, UInt32 nSize, ref UInt32 lpNumberOfBytesRead)
+        {
+            if (!isLinux)
+                return Windows.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+            else
+                return Linux.ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, ref lpNumberOfBytesRead);
+        }
 
+        static public uint GetLastError()
+        {
+            if (!isLinux)
+                return Windows.GetLastError();
+            return 0;
+        }
 
-        [DllImport("psapi.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetModuleInformation(
+        public static bool GetModuleInformation(
             [In] IntPtr ProcessHandle,
             [In] IntPtr ModuleHandle,
             [Out] out ModuleInfo ModInfo,
             [In] int Size
-            );
+            )
+        {
+            if (!isLinux)
+                return Windows.GetModuleInformation(ProcessHandle, ModuleHandle, out ModInfo, Size);
+            else
+            {
+                ModInfo = new ModuleInfo();
+                return false;
+            }
+        }
 
-        
-        [DllImport("psapi.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool EnumProcessModulesEx(
+        public static bool EnumProcessModulesEx(
             [In] IntPtr ProcessHandle,
             [Out] IntPtr[] ModuleHandles,
             [In] int Size,
             [Out] out int RequiredSize,
             [In] uint dwFilterFlag
-            );
-        
-        [DllImport("psapi.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool EnumProcessModules(
+            )
+        {
+            if (!isLinux)
+                return Windows.EnumProcessModulesEx(ProcessHandle, ModuleHandles, Size, out RequiredSize, dwFilterFlag);
+            else
+            {
+                RequiredSize = 0;
+                return false;
+            }
+        }
+
+        public static bool EnumProcessModules(
             [In] IntPtr ProcessHandle,
             [Out] IntPtr[] ModuleHandles,
             [In] int Size,
             [Out] out int RequiredSize
-            );
+            )
+        {
+            if (!isLinux)
+            {
+                return Windows.EnumProcessModules(ProcessHandle, ModuleHandles, Size, out RequiredSize);
+            }
+            else
+            {
+                RequiredSize = 0;
+                return false;
+            }
+        }
 
-        [DllImport("psapi.dll")]
-        public static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName,
-            [In] [MarshalAs(UnmanagedType.U4)] int nSize);
+        public static uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName,
+            [In] [MarshalAs(UnmanagedType.U4)] int nSize)
+        {
+            if (!isLinux)
+            {
+                return Windows.GetModuleFileNameEx(hProcess, hModule, lpBaseName, nSize);
+            }
+            else
+            {
+                return 0;
+            }
+        }
 
         //Umstandsweg dank Microsoft
         public static List<MyProcessModule> GetProcessModules(Process process)
@@ -306,43 +377,86 @@ namespace DSO_Economic
 
             itemEntries = new List<CItemEntry>();
             resourceEntries = new List<CResourceEntry>();
-            string[] processes = new string[] { "plugin-container", "iexplore" }; //plugin-container für Chrome und Firefox ... IE macht wieder sein eigenes Ding
+            string[] processes;
+            if (!isLinux)
+                processes = new string[] { "plugin-container", "iexplore", "chrome" }; //plugin-container für Chrome und Firefox ... IE macht wieder sein eigenes Ding
+            else
+                processes = new string[] { "plugin-containe", "plugin-container" };
             foreach (string pname in processes)
             {
-                Process[] pList = Process.GetProcessesByName(pname);
-                foreach (Process p in pList)
+                List<MyProcess> pList=new List<MyProcess>();
+
+                if (!isLinux)
+                    foreach(Process p in Process.GetProcessesByName(pname))
+                        pList.Add(new MyProcess(p));
+                else
+                    foreach (LinuxProcess p in Linux.GetProcessesByName(pname))
+                        pList.Add(new MyProcess(p));
+
+
+                foreach (MyProcess p in pList)
                 {
                     Main = p;
+                    npswf = null;
+                    Debug.Print("Process: {0}", pname);
 
-                    foreach (MyProcessModule mo in GetProcessModules(p))
+                    if (!isLinux)
                     {
-                        if (mo.ModuleName.ToUpper() == "NPSWF32.DLL") //wird vom Firefox geladen
+                        foreach (MyProcessModule mo in GetProcessModules(p.Process))
                         {
-                            npswf = mo;
-                            break;
-                        }
-                        if ((mo.ModuleName.ToUpper().Substring(0, 5) == "FLASH") && (mo.ModuleName.ToUpper().Substring(mo.ModuleName.Length - 4, 4) == ".OCX")) //Flash*.ocx ... Internet Explorer ...
-                        {
-                            npswf = mo;
-                            break;
+                            Debug.Print(mo.ModuleName.ToUpper());
+                            if (mo.ModuleName.ToUpper() == "NPSWF32.DLL") //wird von Firefox geladen
+                            {
+                                npswf = mo;
+                                break;
+                            }
+                            if (mo.ModuleName.ToUpper() == "GCSWF32.DLL") //wird von Chrome geladen
+                            {
+                                npswf = mo;
+                                break;
+                            }
+                            if ((mo.ModuleName.ToUpper().Substring(0, 5) == "FLASH") && (mo.ModuleName.ToUpper().Substring(mo.ModuleName.Length - 4, 4) == ".OCX")) //Flash*.ocx ... Internet Explorer ...
+                            {
+                                npswf = mo;
+                                break;
+                            }
                         }
                     }
+                    else
+                    {
+                        foreach (MyProcessModule mo in Linux.GetProcessModules(p.LinuxProcess))
+                        {
+                            Debug.Print("Module ...");
+                            Debug.Print(mo.ModuleName.ToUpper());
+                            if (mo.ModuleName.ToUpper() == "LIBFLASHPLAYER.SO")
+                            {
+                                npswf = mo;
+                                break;
+                            }
+                        }
+                    }
+
+                    Debug.Print("End module list loop");
+
                     if (npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
+                    
+                    Debug.Print("npswf found ...");
 
                     uint size;
                     uint br = 0;
+                    address = 0;
                     MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
                     do
                     {
                         result = VirtualQueryEx(p.Handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
                         if (!result) break; //am ende angekommen ... wir können aufhören
-                        if (m.AllocationBase == null)
+                        /*if (m.AllocationBase == null)
                         {
                             address = (long)m.BaseAddress + (long)m.RegionSize;
                             continue;
-                        }
+                        }*/
 
-                        Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", m.BaseAddress, (long)m.BaseAddress + (long)m.RegionSize, m.RegionSize);
+                        Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", (long)m.BaseAddress, (long)m.BaseAddress + (long)m.RegionSize, m.RegionSize);
                         size = (uint)m.RegionSize;
                         if (size > Params.maxmemsize)
                         {
@@ -410,7 +524,22 @@ namespace DSO_Economic
             return true;
         }
     }
-
+    public class MyProcess
+    {
+        public IntPtr Handle;
+        public Process Process;
+        public LinuxProcess LinuxProcess;
+        public MyProcess(LinuxProcess p)
+        {
+            this.Handle = p.Handle;
+            this.LinuxProcess = p;
+        }
+        public MyProcess(Process p)
+        {
+            this.Process = p;
+            this.Handle = p.Handle;
+        }
+    }
     public class MyProcessModule
     {
         public string ModuleName;

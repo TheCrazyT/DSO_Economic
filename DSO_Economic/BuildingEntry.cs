@@ -145,6 +145,7 @@ namespace DSO_Economic
                 this._loadedsPTime = -1;
                 this._loadedePTime = -1;
             }
+            odr.Close();
         }
         public void save()
         {

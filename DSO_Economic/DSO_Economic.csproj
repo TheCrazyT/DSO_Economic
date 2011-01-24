@@ -51,6 +51,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.DomainServices, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Web.Ria, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="ZedGraph, Version=5.1.5.28844, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
@@ -63,7 +65,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BuildingEnry.cs" />
+    <Compile Include="BuildingEntry.cs" />
     <Compile Include="DSOForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -73,6 +75,7 @@
     <Compile Include="Global.cs">
     </Compile>
     <Compile Include="ItemEntry.cs" />
+    <Compile Include="Linux.cs" />
     <Compile Include="Loading.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -114,6 +117,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="ResourceEntry.cs" />
+    <Compile Include="Windows.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="BuildingProductionTimes.txt" />

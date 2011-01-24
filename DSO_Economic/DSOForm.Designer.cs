@@ -122,7 +122,7 @@
             this.resources.FormattingEnabled = true;
             this.resources.Location = new System.Drawing.Point(137, 31);
             this.resources.Name = "resources";
-            this.resources.Size = new System.Drawing.Size(124, 511);
+            this.resources.Size = new System.Drawing.Size(124, 550);
             this.resources.TabIndex = 7;
             // 
             // graph
@@ -141,7 +141,7 @@
             this.graph.ScrollMinX = 0;
             this.graph.ScrollMinY = 0;
             this.graph.ScrollMinY2 = 0;
-            this.graph.Size = new System.Drawing.Size(474, 538);
+            this.graph.Size = new System.Drawing.Size(474, 576);
             this.graph.TabIndex = 6;
             // 
             // items
@@ -151,7 +151,7 @@
             this.items.FormattingEnabled = true;
             this.items.Location = new System.Drawing.Point(14, 31);
             this.items.Name = "items";
-            this.items.Size = new System.Drawing.Size(117, 511);
+            this.items.Size = new System.Drawing.Size(117, 550);
             this.items.TabIndex = 5;
             this.items.SelectedValueChanged += new System.EventHandler(this.items_SelectedValueChanged);
             // 
@@ -212,7 +212,8 @@
             // 
             // btn_export
             // 
-            this.btn_export.Location = new System.Drawing.Point(10, 520);
+            this.btn_export.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_export.Location = new System.Drawing.Point(7, 568);
             this.btn_export.Name = "btn_export";
             this.btn_export.Size = new System.Drawing.Size(186, 23);
             this.btn_export.TabIndex = 6;
@@ -222,6 +223,9 @@
             // 
             // lst_production
             // 
+            this.lst_production.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.lst_production.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader4,
             this.columnHeader5,
@@ -229,7 +233,7 @@
             this.columnHeader7});
             this.lst_production.Location = new System.Drawing.Point(202, 3);
             this.lst_production.Name = "lst_production";
-            this.lst_production.Size = new System.Drawing.Size(540, 546);
+            this.lst_production.Size = new System.Drawing.Size(540, 588);
             this.lst_production.TabIndex = 5;
             this.lst_production.UseCompatibleStateImageBehavior = false;
             this.lst_production.View = System.Windows.Forms.View.Details;
@@ -255,10 +259,12 @@
             // 
             // lst_buildings
             // 
+            this.lst_buildings.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)));
             this.lst_buildings.FormattingEnabled = true;
             this.lst_buildings.Location = new System.Drawing.Point(7, 3);
             this.lst_buildings.Name = "lst_buildings";
-            this.lst_buildings.Size = new System.Drawing.Size(186, 511);
+            this.lst_buildings.Size = new System.Drawing.Size(186, 563);
             this.lst_buildings.TabIndex = 0;
             this.lst_buildings.SelectedIndexChanged += new System.EventHandler(this.lst_buildings_SelectedIndexChanged);
             // 
@@ -290,9 +296,10 @@
             // 
             // btn_reconnect
             // 
-            this.btn_reconnect.Location = new System.Drawing.Point(142, 624);
+            this.btn_reconnect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_reconnect.Location = new System.Drawing.Point(142, 627);
             this.btn_reconnect.Name = "btn_reconnect";
-            this.btn_reconnect.Size = new System.Drawing.Size(87, 22);
+            this.btn_reconnect.Size = new System.Drawing.Size(87, 20);
             this.btn_reconnect.TabIndex = 12;
             this.btn_reconnect.Text = "neu verbinden";
             this.btn_reconnect.UseVisualStyleBackColor = true;

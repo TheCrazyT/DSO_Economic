@@ -83,6 +83,7 @@ namespace DSO_Economic
         private void DSOEForm_Load(object sender, EventArgs e)
         {
             #region init
+            Global.isLinux=System.Environment.OSVersion.Platform.Equals(System.PlatformID.Unix);
             status.Text = "";
             btn_reconnect.Visible = false;
             this.Visible = false;
