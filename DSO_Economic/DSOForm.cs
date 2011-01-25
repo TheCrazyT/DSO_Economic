@@ -170,48 +170,7 @@ namespace DSO_Economic
 
             Loading LDForm = new Loading();
             LDForm.Show();
-
-            if (Params.usesqlite)
-            {
-                Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
-                Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
-                Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
-            }
-            else
-                if (Params.usecustomdb)
-                {
-                    Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-                    Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-                    Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
-                }
-                else
-                    if (!Params.usetxt)
-                    {
-                        Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-                        Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-                        Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
-                    }
-                    else
-                    {
-                        Global.DbConnection = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-                        Global.DbConnection2 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-                        Global.DbConnection3 = new OdbcConnection(System.Configuration.ConfigurationManager.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
-                    }
-
-            Global.DbConnection.Open();
-            OdbcCommand DbCommand = Global.DbConnection.CreateCommand();
-            OdbcDataReader DbReader;
-            DbCommand.CommandText = "SELECT Name FROM items" + Global.tblext + " ORDER BY ID ASC";
-            DbReader = DbCommand.ExecuteReader();
-
-            Global.itemnames = new List<string>();
-            while (DbReader.Read())
-            {
-                Global.itemnames.Add(DbReader.GetString(0));
-            }
-            DbReader.Close();
-            Global.DbConnection.Close();
-
+            Global.init();
 
             if(!Global.connect())
             {
@@ -440,7 +399,7 @@ namespace DSO_Economic
             {
                 if ((s = new StreamWriter(sfd.OpenFile())) != null)
                 {
-                    s.WriteLine("Name,PTime,Level,Active");
+                    /*s.WriteLine("Name,PTime,Level,Active");
                     foreach (CBuildingEntry b in Global.buildingEntries)
                     {
                         double ticks = b.ePTime - b.sPTime;
@@ -452,7 +411,8 @@ namespace DSO_Economic
                         else
                             a = "0";
                         s.WriteLine(b.Name + "," + (ticks / 1000) + "," + b.level + "," + a);
-                    }
+                    }*/
+                    s.Write(Global.export());
                     s.Close();
                 }
             }

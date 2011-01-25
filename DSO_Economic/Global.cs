@@ -7,10 +7,10 @@ using System.Data.Odbc;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Configuration;
 namespace DSO_Economic
 {
-
-    static class Global
+    class Global
     {
         public static bool isLinux;
         public static bool connected
@@ -49,7 +49,83 @@ namespace DSO_Economic
         public static string tblext = "";
         public static CProduction Production;
 
+        static public void init()
+        {
+            Configuration conf=ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            foreach (ConnectionStringSettings cs in conf.ConnectionStrings.ConnectionStrings)
+            {
+                cs.ConnectionString = cs.ConnectionString.Replace("|DataDirectory|", Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+            }
+            if (conf.ConnectionStrings == null)
+                throw (new System.Exception("Konfigurationsdatei nicht geladen!"));
+            
+            if (Params.usesqlite)
+            {
+                DbConnection = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
+                DbConnection2 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
+                DbConnection3 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
+            }
+            else
+                if (Params.usecustomdb)
+                {
+                    DbConnection = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                    DbConnection2 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                    DbConnection3 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.CustomDB"].ConnectionString);
+                }
+                else
+                    if (!Params.usetxt)
+                    {
+                        if (conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"] == null)
+                            throw (new System.Exception("Konfigurationseintrag DSO_Economic.Properties.Settings.DataDB nicht geladen!\nPfad1:" + Application.ExecutablePath + "\nPfad2:" + Application.StartupPath + "\nPfad3:"+System.Reflection.Assembly.GetExecutingAssembly().Location));
 
+                        DbConnection = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                        DbConnection2 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                        DbConnection3 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
+                    }
+                    else
+                    {
+                        DbConnection = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                        DbConnection2 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                        DbConnection3 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.CsvDB"].ConnectionString);
+                    }
+
+            if (DbConnection == null)
+                throw (new System.Exception("Datenbank nicht initialisiert!"));
+
+            DbConnection.Open();
+            OdbcCommand DbCommand = DbConnection.CreateCommand();
+            OdbcDataReader DbReader;
+            DbCommand.CommandText = "SELECT Name FROM items" + tblext + " ORDER BY ID ASC";
+            DbReader = DbCommand.ExecuteReader();
+
+            if (DbConnection == null)
+                throw (new System.Exception("DbReader nicht initialisiert!"));
+
+            itemnames = new List<string>();
+            while (DbReader.Read())
+            {
+                itemnames.Add(DbReader.GetString(0));
+            }
+            DbReader.Close();
+            DbConnection.Close();
+        }
+        static public string export()
+        {
+            string s="Name,PTime,Level,Active\r\n";
+            foreach (CBuildingEntry b in buildingEntries)
+            {
+                double ticks = b.ePTime - b.sPTime;
+                if ((b.ePTime == -1) || (b.sPTime == -1))
+                    ticks = 0;
+                string a;
+                if (b.isActive)
+                    a = "1";
+                else
+                    a = "0";
+                s+=(b.Name + "," + (ticks / 1000) + "," + b.level + "," + a+"\r\n");
+            }
+            return s;
+        }
         static public bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength)
         {
             if (!isLinux)
@@ -572,5 +648,38 @@ namespace DSO_Economic
         public static uint maxmemsize = 0x300000;
         public static uint maxsearchoffset = 0x1E0000;
         public static bool buildingsonly = false;
+    }
+
+
+
+    [Guid("9B105525-AE1C-4ea8-8777-8AAB5AB026EF")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIDispatch)]
+    public interface IDSOE_VBAInterface
+    {
+        [DispId(1)] string getBuildingsCSV();
+    }
+
+    [Guid("B73E5033-0042-4b59-B9FF-1AD5267660C4")]
+    [ClassInterface(ClassInterfaceType.None)]
+    [ProgId("DSO_Economic")]
+    public class DSOE_VBAInterface : IDSOE_VBAInterface
+    {
+        public string getBuildingsCSV()
+        {
+            try
+            {
+                Global.init();
+                if (Global.connect())
+                {
+                    return Global.export();
+                }
+                return "";
+            }
+            catch (Exception e)
+            {
+
+                return e.ToString() + '\n' + e.StackTrace + '\n' + e.InnerException + '\n';
+            }
+        }
     }
 }

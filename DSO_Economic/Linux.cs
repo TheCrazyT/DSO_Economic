@@ -19,7 +19,7 @@ namespace DSO_Economic
         public const int PTRACE_DETACH = 0x11;
         static public bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength)
         {
-            Debug.Print("Linux.VirtualQueryEx {0} {1}",hProcess,lpAddress);
+            Debug.Print("Linux.VirtualQueryEx {0} {1}", hProcess, lpAddress);
             lpBuffer = new MEMORY_BASIC_INFORMATION();
             string txt = File.ReadAllText("/proc/" + hProcess + "/maps");
             string[] lines = txt.Split('\n');
@@ -46,14 +46,14 @@ namespace DSO_Economic
         }
         static public bool ReadProcessMemory(IntPtr hProcess, int lpBaseAddress, byte[] lpBuffer, int nSize, ref int lpNumberOfBytesRead)
         {
+            Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
+            byte[] data = new byte[4];
+            ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
+            waitpid(hProcess, 0, 0);
+
             try
             {
-                Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
-                byte[] data = new byte[4];
-                ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
-                waitpid(hProcess, 0, 0);
-                
-                BinaryReader br = new BinaryReader(new FileStream("/proc/"+ hProcess +"/mem", FileMode.Open));
+                BinaryReader br = new BinaryReader(new FileStream("/proc/" + hProcess + "/mem", FileMode.Open));
                 br.BaseStream.Seek((uint)lpBaseAddress, SeekOrigin.Begin);
                 lpNumberOfBytesRead = br.Read(lpBuffer, 0, nSize);
                 br.Close();
@@ -67,18 +67,19 @@ namespace DSO_Economic
             }
             catch (Exception e)
             {
+                Debug.Print("{0}",e);
                 return false;
             }
         }
         static public bool ReadProcessMemory(IntPtr hProcess, int lpBaseAddress, uint[] lpBuffer, int nSize, ref int lpNumberOfBytesRead)
         {
+            Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
+            byte[] data = new byte[4];
+            ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
+            waitpid(hProcess, 0, 0);
+
             try
             {
-                Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
-                byte[] data = new byte[4];
-                ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
-                waitpid(hProcess, 0, 0);
-
                 BinaryReader br = new BinaryReader(new FileStream("/proc/" + hProcess + "/mem", FileMode.Open));
                 byte[] buf = new byte[nSize * sizeof(uint)];
                 br.BaseStream.Seek((uint)lpBaseAddress, SeekOrigin.Begin);
@@ -95,18 +96,19 @@ namespace DSO_Economic
             }
             catch (Exception e)
             {
+                Debug.Print("{0}", e);
                 return false;
             }
         }
         static public bool ReadProcessMemory(IntPtr hProcess, int lpBaseAddress, ulong[] lpBuffer, int nSize, ref int lpNumberOfBytesRead)
         {
+            Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
+            byte[] data = new byte[4];
+            ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
+            waitpid(hProcess, 0, 0);
+
             try
             {
-                Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
-                byte[] data = new byte[4];
-                ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
-                waitpid(hProcess, 0, 0);
-
                 BinaryReader br = new BinaryReader(new FileStream("/proc/" + hProcess + "/mem", FileMode.Open));
                 byte[] buf = new byte[nSize * sizeof(ulong)];
                 br.BaseStream.Seek((uint)lpBaseAddress, SeekOrigin.Begin);
@@ -123,18 +125,19 @@ namespace DSO_Economic
             }
             catch (Exception e)
             {
+                Debug.Print("{0}", e);
                 return false;
             }
         }
         static public bool ReadProcessMemory(IntPtr hProcess, int lpBaseAddress, double[] lpBuffer, int nSize, ref int lpNumberOfBytesRead)
         {
+            Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
+            byte[] data = new byte[4];
+            ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
+            waitpid(hProcess, 0, 0);
+
             try
             {
-                Debug.Print("Linux.ReadProcessMemory {0} {1} {2}", hProcess, (uint)lpBaseAddress, nSize);
-                byte[] data = new byte[4];
-                ptrace(PTRACE_ATTACH, hProcess, (IntPtr)0, out data);
-                waitpid(hProcess, 0, 0);
-
                 BinaryReader br = new BinaryReader(new FileStream("/proc/" + hProcess + "/mem", FileMode.Open));
                 byte[] buf = new byte[nSize * sizeof(double)];
                 br.BaseStream.Seek((uint)lpBaseAddress, SeekOrigin.Begin);
@@ -151,6 +154,7 @@ namespace DSO_Economic
             }
             catch (Exception e)
             {
+                Debug.Print("{0}", e);
                 return false;
             }
         }
