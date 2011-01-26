@@ -507,6 +507,11 @@ namespace DSO_Economic
                             if (mo.ModuleName.ToUpper() == "LIBFLASHPLAYER.SO")
                             {
                                 npswf = mo;
+                                int i = 0;
+                                foreach (MyProcessModule mo2 in Linux.GetProcessModules(p.LinuxProcess))
+                                    if (mo2.ModuleName.ToUpper() == "LIBFLASHPLAYER.SO")
+                                        if (i++ >= 1)
+                                            npswf.ModuleMemorySize += mo2.ModuleMemorySize;
                                 break;
                             }
                         }
