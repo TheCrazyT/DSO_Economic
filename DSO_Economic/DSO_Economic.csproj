@@ -86,6 +86,7 @@
     <Compile Include="DSOForm.Designer.cs">
       <DependentUpon>DSOForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Flash.cs" />
     <Compile Include="Global.cs">
     </Compile>
     <Compile Include="ItemEntry.cs" />

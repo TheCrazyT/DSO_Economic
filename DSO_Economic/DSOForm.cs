@@ -187,7 +187,6 @@ namespace DSO_Economic
                 CNameValue NV = new CNameValue(name + " : " + Global.Buildings[name], name);
                 lst_buildings.Items.Add(NV);
             }
-            Debug.Print("Building array at: {0:x}", Global.BuildingsPointer);
 
 
             XmlSerializer xs = new XmlSerializer(typeof(CProduction));

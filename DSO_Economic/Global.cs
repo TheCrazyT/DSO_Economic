@@ -30,7 +30,6 @@ namespace DSO_Economic
                 return true;
             }
         }
-        public static uint BuildingsPointer = 0;
         public static Dictionary<String, uint> Buildings;
 
         public static MyProcessModule npswf = null;
@@ -367,32 +366,34 @@ namespace DSO_Economic
                 }
 
                 mem2 = new uint[1];
+                uint[] mem3 = new uint[4];
                 if (!ReadProcessMemory(handle, MainClass + 0x88, mem2, 4, ref br)) continue;
 
                 if (!ReadProcessMemory(handle, mem2[0] + 0x1a8, mem2, 4, ref br)) continue;
 
                 if (!ReadProcessMemory(handle, mem2[0] + 0x68, mem2, 4, ref br)) continue;
 
-                if (!ReadProcessMemory(handle, mem2[0] + 0x54, mem2, 4, ref br)) continue;
 
-                uint[] mem3 = new uint[4];
+                uint structureclass = mem2[0];
 
-                if (!ReadProcessMemory(handle, mem2[0] + 0x10, mem3, 0x10, ref br)) continue;
+                foreach (uint o in Flash.getOffsetList(structureclass + 0x14))
+                {
+                    CResourceEntry RE = new CResourceEntry(o);
+                    Debug.Print("Resource at: {0:x}", o);
+                    Debug.Print("{0}", RE.Name);
+                    if (!(((RE.Name == "Wood") || (RE.Name == "RealWood")) && !Params.trees))
+                        resourceEntries.Add(RE);
+                }
 
-                uint cnt = mem3[0];
-                BuildingsPointer = mem3[3];
-
-                mem2 = new uint[cnt];
-                if (!ReadProcessMemory(handle, BuildingsPointer, mem2, cnt * 4, ref br)) continue;
 
                 buildingEntries = new List<CBuildingEntry>();
                 Buildings = new Dictionary<String, uint>();
 
                 DbConnection3.Open();
-                for (int x = 0; x < cnt; x++)
+                foreach (uint o in Flash.getOffsetList(structureclass + 0x54))
                 {
-                    CBuildingEntry BE = new CBuildingEntry(mem2[x] & 0xFFFFFFF8);
-                    Debug.Print("Building at: {0:x}", mem2[x] & 0xFFFFFFF8);
+                    CBuildingEntry BE = new CBuildingEntry(o);
+                    Debug.Print("Building at: {0:x}", o);
                     Debug.Print("{0} {1} {2}", BE.Name, BE.X, BE.Y);
                     if (!Buildings.ContainsKey(BE.Name))
                         Buildings.Add(BE.Name, 1);
@@ -401,46 +402,6 @@ namespace DSO_Economic
                     buildingEntries.Add(BE);
                 }
                 DbConnection3.Close();
-            }
-            return;
-        }
-        private static void findResources(uint[] mem, uint start, uint size)
-        {
-            Application.DoEvents();
-
-            uint i = 0;
-            uint v;
-            uint w;
-
-            for (i = 0; i < size - 0x54; i += 4)
-            {
-                v = mem[(i) / 4];
-                if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
-                    continue;
-
-                uint y = mem[(i + 0x40) / 4];
-                if (y != 2)
-                    continue;
-
-                v = mem[(i + 0x44) / 4];
-                if (((int)v != -1) && ((int)v != 0x17) && ((int)v != 0x14) && ((int)v != 5))
-                    continue;
-
-
-                w = mem[(i + 0x48) / 4];
-                if (w > 5000)
-                    continue;
-                
-                v = mem[(i + 0x54) / 4];
-                if (((v == 5) || (v == 25)) && (!Params.trees))
-                    continue;
-
-                if ((v != 160) && (v != 1000)) //Wasser und Getreide werden immer angezeigt ... (1000 und 160 sind dabei die maximale Anzahl an Einheiten, bisher habe ich keinen besseren Weg gefunden)
-                    if (v == w)
-                        continue;
-
-
-                resourceEntries.Add(new CResourceEntry(start + i + 0x40));
             }
             return;
         }
@@ -564,8 +525,7 @@ namespace DSO_Economic
 
                         findMainClass(p.Handle, mem, (uint)m.BaseAddress, (uint)m.RegionSize);
 
-                        //ToDo: optimieren ... aus der Hauptklasse rausfischen
-                        findResources(mem, (uint)m.BaseAddress, (uint)m.RegionSize); //Rohstoffe sind in mehreren Segmenten enthalten ... also suchen wir alles komplett durch
+                        if ((Main != null) && (itemEntries.Count > 0)) break;
 
                         address = (long)m.BaseAddress + (long)m.RegionSize;
 

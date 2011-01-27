@@ -11,6 +11,7 @@ namespace DSO_Economic
         public long amount;
         private uint _ID;
         private static uint lastresourceEntriesID = 0;
+        public string Name="";
         public static IComparer<CResourceEntry> SortByAmount
         {
             get
@@ -32,12 +33,14 @@ namespace DSO_Economic
                 return _ID;
             }
         }
-        public CResourceEntry(long offset)
+        public CResourceEntry(uint offset)
         {
             this._ID = lastresourceEntriesID;
             lastresourceEntriesID++;
             this.amount = 0;
             this.memoffset = offset;
+
+            Name=Flash.getString(offset + 0x5C);
         }
         public int CompareTo(object obj)
         {
@@ -48,55 +51,55 @@ namespace DSO_Economic
             get
             {
                 UInt32 br = 0;
-                uint[] mem = new uint[0x18 / 4];
+                uint[] mem = new uint[(0x40+0x18) / 4];
                 if ((Global.Main != null) && (memoffset != 0))
                 {
-                    Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset), mem, 0x18, ref br);
+                    Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset), mem, 0x18+0x40, ref br);
 
-                    if ((int)mem[0] == 2)
+                    if ((int)mem[0x40/4] == 2)
                     {
-                        amount = mem[8 / 4];
+                        amount = mem[0x48 / 4];
 
-                        uint max = mem[0x14 / 4];
-                        string name = "";
-                        switch (max)
+                        string n = "";
+                        switch (Name)
                         {
-                            case 5:
-                            case 25:
-                                name = "Baum";
+                            case "Wood":
+                            case "RealWood":
+                                n = "Baum";
                                 break;
-
-                            case 1000:
-                                name = "Wasser";
+                            case "Coal":
+                                n = "Kohle";
                                 break;
-                            case 610:
-                                name = "Stein";
+                            case "Water":
+                                n = "Wasser";
                                 break;
-                            case 700:
-                            case 680:
-                                name = "Fisch";
+                            case "Stone":
+                                n = "Stein";
                                 break;
-                            case 250:
-                                name = "Wild";
+                            case "Fish":
+                                n = "Fisch";
                                 break;
-                            case 400:
-                                name = "Eisen";
+                            case "Wild":
+                                n = "Wild";
                                 break;
-                            case 710:
-                                name = "Kupfer";
+                            case "IronOre":
+                                n = "Eisen";
                                 break;
-                            case 300:
-                                name = "Marmor";
+                            case "BronzeOre":
+                                n = "Kupfer";
                                 break;
-                            case 160:
-                                name = "Getreide";
+                            case "Marble":
+                                n = "Marmor";
+                                break;
+                            case "Corn":
+                                n = "Getreide";
                                 break;
                             default:
-                                name = "?" + max;
+                                n = "?" + Name;
                                 break;
 
                         }
-                        return name + ": " + amount;
+                        return n + ": " + amount;
                     }
                     else
                         Debug.Print("Invalid ID:{0} memoffset:{1:x}", ID, memoffset);

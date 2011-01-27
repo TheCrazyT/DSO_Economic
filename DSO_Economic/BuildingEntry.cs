@@ -114,15 +114,7 @@ namespace DSO_Economic
             uint br = 0;
             uint[] mem2 = new uint[4];
 
-            if (!Global.ReadProcessMemory(Global.Main.Handle, offset + 0x9C, mem2, 4, ref br)) return;
-
-            if (!Global.ReadProcessMemory(Global.Main.Handle, mem2[0] + 0x08, mem2, 4 * 3, ref br)) return;
-
-            byte[] mem = new byte[mem2[2]];
-            if (!Global.ReadProcessMemory(Global.Main.Handle, mem2[0], mem, mem2[2], ref br)) return;
-
-            Name = Encoding.UTF8.GetString(mem);
-            if (Name == null) Name = "";
+            Name = Flash.getString(offset + 0x9C);
 
             if (!Global.ReadProcessMemory(Global.Main.Handle, offset + 0xB4, mem2,4, ref br)) return;
             RCoffset = mem2[0];

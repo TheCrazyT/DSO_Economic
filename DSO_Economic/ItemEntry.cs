@@ -52,28 +52,11 @@ namespace DSO_Economic
         {
             get
             {
-                uint br = 0;
-                uint[] mem2 = new uint[4];
-
-                if (!Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset + 0x18), mem2, 4, ref br)) return "";
-
-                if (!Global.ReadProcessMemory(Global.Main.Handle, mem2[0] + 0x08, mem2, 4 * 3, ref br)) return "";
-                uint reloffset = mem2[0];
-                uint offset = mem2[1];
-                uint size = mem2[2];
-                byte[] mem = new byte[size];
-                if (!Global.ReadProcessMemory(Global.Main.Handle, offset+0x08, mem2, 4, ref br)) return "";
-                offset=mem2[0];
-                if (!Global.ReadProcessMemory(Global.Main.Handle, offset+reloffset, mem, size, ref br)) return "";
-                
-
-                string Name = Encoding.UTF8.GetString(mem);
-                if (Name == null) Name = "";
-                return Name;
+                return Flash.getString2(memoffset + 0x18);
             }
         }
-        public long memoffset;
-        public CItemEntry(long offset)
+        public uint memoffset;
+        public CItemEntry(uint offset)
         {
             _ID = (uint)(last_ID + 1);
             last_ID = (int)_ID;
