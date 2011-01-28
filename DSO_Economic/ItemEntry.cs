@@ -100,13 +100,8 @@ namespace DSO_Economic
         {
             get
             {
-                UInt32 br = 0;
-                byte[] mem = new byte[0x20];
                 if ((Global.Main != null) && (memoffset != 0))
-                {
-                    Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset), mem, 0x20, ref br);
                     return _Name + ": " + amount;
-                }
                 Debug.Print("ID:{0} memoffset:{1:x}", ID, memoffset);
                 return "";
             }

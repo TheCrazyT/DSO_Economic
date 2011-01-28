@@ -8,7 +8,18 @@ namespace DSO_Economic
     public class CResourceEntry : IComparable
     {
         private long memoffset;
-        public long amount;
+        public long amount
+        {
+            get
+            {
+                UInt32 br = 0;
+                uint[] mem = new uint[(0x40 + 0x18) / 4];
+                Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset), mem, 0x18 + 0x40, ref br);
+                if ((int)mem[0x40 / 4] == 2)
+                    return mem[0x48 / 4];
+                return 0;
+            }
+        }
         private uint _ID;
         private static uint lastresourceEntriesID = 0;
         public string Name="";
@@ -37,7 +48,6 @@ namespace DSO_Economic
         {
             this._ID = lastresourceEntriesID;
             lastresourceEntriesID++;
-            this.amount = 0;
             this.memoffset = offset;
 
             Name=Flash.getString(offset + 0x5C);
@@ -54,12 +64,6 @@ namespace DSO_Economic
                 uint[] mem = new uint[(0x40+0x18) / 4];
                 if ((Global.Main != null) && (memoffset != 0))
                 {
-                    Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset), mem, 0x18+0x40, ref br);
-
-                    if ((int)mem[0x40/4] == 2)
-                    {
-                        amount = mem[0x48 / 4];
-
                         string n = "";
                         switch (Name)
                         {
@@ -100,9 +104,6 @@ namespace DSO_Economic
 
                         }
                         return n + ": " + amount;
-                    }
-                    else
-                        Debug.Print("Invalid ID:{0} memoffset:{1:x}", ID, memoffset);
                 }
                 Debug.Print("ID:{0} memoffset:{1:x}", ID, memoffset);
                 return "";

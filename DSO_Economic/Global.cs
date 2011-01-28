@@ -108,7 +108,7 @@ namespace DSO_Economic
             DbReader.Close();
             DbConnection.Close();
         }
-        static public string export()
+        static public string export_buildings()
         {
             string s="Name,PTime,Level,Active\r\n";
             foreach (CBuildingEntry b in buildingEntries)
@@ -123,6 +123,20 @@ namespace DSO_Economic
                     a = "0";
                 s+=(b.Name + "," + (ticks / 1000) + "," + b.level + "," + a+"\r\n");
             }
+            return s;
+        }
+        static public string export_resources()
+        {
+            string s = "Name,Amount\r\n";
+            foreach (CResourceEntry r in resourceEntries)
+                s += (r.Name + "," + r.amount + "\r\n");
+            return s;
+        }
+        static public string export_items()
+        {
+            string s = "Name,Amount\r\n";
+            foreach (CItemEntry i in itemEntries)
+                s += (i.internName + "," + i.amountStr + "\r\n");
             return s;
         }
         static public bool VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, uint dwLength)
@@ -622,6 +636,8 @@ namespace DSO_Economic
     public interface IDSOE_VBAInterface
     {
         [DispId(1)] string getBuildingsCSV();
+        [DispId(2)] string getResourcesCSV();
+        [DispId(3)] string getItemsCSV();
     }
 
     [Guid("B73E5033-0042-4b59-B9FF-1AD5267660C4")]
@@ -629,15 +645,45 @@ namespace DSO_Economic
     [ProgId("DSO_Economic")]
     public class DSOE_VBAInterface : IDSOE_VBAInterface
     {
+        public DSOE_VBAInterface()
+        {
+            Global.init();
+            Global.connect();
+        }
+        public string getResourcesCSV()
+        {
+            try
+            {
+                if (Global.connected)
+                    return Global.export_resources();
+                return "";
+            }
+            catch (Exception e)
+            {
+
+                return e.ToString() + '\n' + e.StackTrace + '\n' + e.InnerException + '\n';
+            }
+        }
         public string getBuildingsCSV()
         {
             try
             {
-                Global.init();
-                if (Global.connect())
-                {
-                    return Global.export();
-                }
+                if (Global.connected)
+                    return Global.export_buildings();
+                return "";
+            }
+            catch (Exception e)
+            {
+
+                return e.ToString() + '\n' + e.StackTrace + '\n' + e.InnerException + '\n';
+            }
+        }
+        public string getItemsCSV()
+        {
+            try
+            {
+                if (Global.connected)
+                    return Global.export_items();
                 return "";
             }
             catch (Exception e)

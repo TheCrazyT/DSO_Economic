@@ -14,7 +14,9 @@ namespace DSO_Economic
         {
 #if VBAInterfaceTest
             DSOE_VBAInterface i=new DSOE_VBAInterface();
-            MessageBox.Show(i.getcsv());
+            MessageBox.Show(i.getBuildingsCSV());
+            MessageBox.Show(i.getItemsCSV());
+            MessageBox.Show(i.getResourcesCSV());
 #else
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);

@@ -33,17 +33,15 @@ namespace DSO_Economic
             status.Text = "Verbindung unterbrochen!";
             btn_reconnect.Visible = true;
         }
-        
+
 
 
         private void refreshItemList()
         {
-
             int idx = items.SelectedIndex;
             items.BindingContext[Global.itemEntries].SuspendBinding();
             items.BindingContext[Global.itemEntries].ResumeBinding();
             items.SelectedIndex = idx;
-
 
             Global.resourceEntries.Sort(CResourceEntry.SortByAmount);
             object idx2 = resources.SelectedItem;
@@ -83,7 +81,7 @@ namespace DSO_Economic
         private void DSOEForm_Load(object sender, EventArgs e)
         {
             #region init
-            Global.isLinux=System.Environment.OSVersion.Platform.Equals(System.PlatformID.Unix);
+            Global.isLinux = System.Environment.OSVersion.Platform.Equals(System.PlatformID.Unix);
             status.Text = "";
             btn_reconnect.Visible = false;
             this.Visible = false;
@@ -94,85 +92,74 @@ namespace DSO_Economic
             #region ParamChecks
             foreach (string arg in args)
             {
-                if (arg == "/buildingsonly")
+                switch (arg)
                 {
-                    Params.buildingsonly = true;
-                }
-                if (arg == "/usecustomdb")
-                {
-                    Params.usecustomdb = true;
-                }
-                if (arg == "/usesqlitedb")
-                {
-                    Params.usesqlite = true;
-                }
-                if ((arg == "/usetxt") || (Params.usetxt))
-                {
-                    Params.usetxt = true;
-                    Global.tblext = ".txt";
-                }
-                if (arg == "/timer")
-                {
-                    if (args.Length > h + 1)
-                    {
-                        try
-                        {
-                            ItemRefresh.Interval = int.Parse(args[h + 1]);
-                        }
-                        catch (Exception e2)
-                        {
-                            MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            Application.Exit();
-                            this.Dispose();
-                        }
-                    }
-                }
+                    case "/buildingsonly": Params.buildingsonly = true; break;
+                    case "/usecustomdb": Params.usecustomdb = true; break;
+                    case "/usesqlitedb": Params.usesqlite = true; break;
+                    case "/notrees": Params.trees = false; break;
+                    case "/usetxt":
+                        Params.usetxt = true;
+                        Global.tblext = ".txt";
+                        break;
 
-                if (arg == "/mms")
-                {
-                    if (args.Length > h + 1)
-                    {
-                        try
+                    case "/timer":
+                        if (args.Length > h + 1)
                         {
-                            Params.maxmemsize = uint.Parse(args[h + 1]);
+                            try
+                            {
+                                ItemRefresh.Interval = int.Parse(args[h + 1]);
+                            }
+                            catch (Exception e2)
+                            {
+                                MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                Application.Exit();
+                                this.Dispose();
+                            }
                         }
-                        catch (Exception e2)
+                        break;
+
+                    case "/mms":
+                        if (args.Length > h + 1)
                         {
-                            MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            Application.Exit();
-                            this.Dispose();
+                            try
+                            {
+                                Params.maxmemsize = uint.Parse(args[h + 1]);
+                            }
+                            catch (Exception e2)
+                            {
+                                MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                Application.Exit();
+                                this.Dispose();
+                            }
                         }
-                    }
+                        break;
+
+                    case "/mso":
+                        if (args.Length > h + 1)
+                        {
+                            try
+                            {
+                                Params.maxsearchoffset = uint.Parse(args[h + 1]);
+                            }
+                            catch (Exception e2)
+                            {
+                                MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                Application.Exit();
+                                this.Dispose();
+                            }
+                        }
+                        break;
                 }
-                if (arg == "/mso")
-                {
-                    if (args.Length > h + 1)
-                    {
-                        try
-                        {
-                            Params.maxsearchoffset = uint.Parse(args[h + 1]);
-                        }
-                        catch (Exception e2)
-                        {
-                            MessageBox.Show("Unbekannte Eingabe:" + args[h + 1], "", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            Application.Exit();
-                            this.Dispose();
-                        }
-                    }
-                }
-                if (arg == "/notrees") Params.trees = false;
                 h++;
             }
             #endregion
-
-
-
 
             Loading LDForm = new Loading();
             LDForm.Show();
             Global.init();
 
-            if(!Global.connect())
+            if (!Global.connect())
             {
                 Application.Exit();
                 return;
@@ -273,9 +260,9 @@ namespace DSO_Economic
             {
                 Debug.Print(er.StackTrace);
             }
-            PointPairList list2=new PointPairList();
-            foreach(CItemEntry ie in Global.itemEntries)
-                if(ie.ID==items.SelectedIndex)
+            PointPairList list2 = new PointPairList();
+            foreach (CItemEntry ie in Global.itemEntries)
+                if (ie.ID == items.SelectedIndex)
                     list2 = Global.Production.simulate(ie.internName);
             CreateGraph(graph, Global.itemnames[items.SelectedIndex], list, list2);
             graph.Refresh();
@@ -284,8 +271,8 @@ namespace DSO_Economic
         {
             if (seconds == -1) return "-";
             int h = (int)(seconds / 60 / 60);
-            int min = (int)((seconds - h * 60 * 60 ) / 60);
-            int s = (int)(seconds - h * 60 * 60  + min * 60);
+            int min = (int)((seconds - h * 60 * 60) / 60);
+            int s = (int)(seconds - h * 60 * 60 + min * 60);
 
             TimeSpan t2 = new TimeSpan(h, min, s);
             return t2.ToString();
@@ -299,7 +286,7 @@ namespace DSO_Economic
             }
             this.Cursor = Cursors.WaitCursor;
             TimeLeft.Enabled = false;
-            
+
             int i = 0;
             DateTime dt = DateTime.Now;
             foreach (ListViewItem liv in itemsOverview.Items)
@@ -311,10 +298,10 @@ namespace DSO_Economic
                 liv.SubItems[1].Text = formatedTimeFromSeconds(Global.Production.findLimitEmpty(resname));
                 Application.DoEvents();
                 liv.SubItems[2].Text = formatedTimeFromSeconds(Global.Production.findLimitFull(resname));
-                Debug.Print("Fetch Limit for 1 item {1} took {0} seconds.", (DateTime.Now - dt).TotalSeconds,resname); 
+                Debug.Print("Fetch Limit for 1 item {1} took {0} seconds.", (DateTime.Now - dt).TotalSeconds, resname);
                 Application.DoEvents();
             }
-            
+
             this.Cursor = Cursors.Default;
             TimeLeft.Enabled = true;
         }
@@ -398,24 +385,10 @@ namespace DSO_Economic
             {
                 if ((s = new StreamWriter(sfd.OpenFile())) != null)
                 {
-                    /*s.WriteLine("Name,PTime,Level,Active");
-                    foreach (CBuildingEntry b in Global.buildingEntries)
-                    {
-                        double ticks = b.ePTime - b.sPTime;
-                        if ((b.ePTime == -1) || (b.sPTime == -1))
-                            ticks = 0;
-                        string a;
-                        if (b.isActive)
-                            a = "1";
-                        else
-                            a = "0";
-                        s.WriteLine(b.Name + "," + (ticks / 1000) + "," + b.level + "," + a);
-                    }*/
-                    s.Write(Global.export());
+                    s.Write(Global.export_buildings());
                     s.Close();
                 }
             }
-
         }
 
         private void BuildingRefresh_Tick(object sender, EventArgs e)
