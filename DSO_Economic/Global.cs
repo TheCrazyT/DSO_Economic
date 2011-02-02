@@ -381,11 +381,11 @@ namespace DSO_Economic
 
                 mem2 = new uint[1];
                 uint[] mem3 = new uint[4];
-                if (!ReadProcessMemory(handle, MainClass + 0x88, mem2, 4, ref br)) continue;
+                if (!ReadProcessMemory(handle, MainClass + 0x84, mem2, 4, ref br)) continue;
 
-                if (!ReadProcessMemory(handle, mem2[0] + 0x1a8, mem2, 4, ref br)) continue;
+                if (!ReadProcessMemory(handle, mem2[0] + 0x1b8, mem2, 4, ref br)) continue;
 
-                if (!ReadProcessMemory(handle, mem2[0] + 0x68, mem2, 4, ref br)) continue;
+                if (!ReadProcessMemory(handle, mem2[0] + 0x6C, mem2, 4, ref br)) continue;
 
 
                 uint structureclass = mem2[0];

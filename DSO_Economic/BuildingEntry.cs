@@ -51,7 +51,7 @@ namespace DSO_Economic
                 double[] mem = new double[1];
 
                 uint[] mem2 = new uint[4];
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0xB4, mem2, 4, ref br)) return 0;
+                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0xB8, mem2, 4, ref br)) return 0;
                 RCoffset = mem2[0];
 
                 if (RCoffset == 0) return 0;
@@ -70,7 +70,7 @@ namespace DSO_Economic
                 double[] mem = new double[1];
 
                 uint[] mem2 = new uint[4];
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0xB4, mem2, 4, ref br)) return 0;
+                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0xB8, mem2, 4, ref br)) return 0;
                 RCoffset = mem2[0];
 
                 
