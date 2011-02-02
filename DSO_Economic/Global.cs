@@ -8,6 +8,8 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Configuration;
+
+using Protocol;
 namespace DSO_Economic
 {
     class Global
@@ -632,7 +634,7 @@ namespace DSO_Economic
 
 
     [Guid("9B105525-AE1C-4ea8-8777-8AAB5AB026EF")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIDispatch)]
+    [InterfaceType(ComInterfaceType.InterfaceIsIDispatch), ComVisible(true)]
     public interface IDSOE_VBAInterface
     {
         [DispId(1)] string getBuildingsCSV();
@@ -640,10 +642,29 @@ namespace DSO_Economic
         [DispId(3)] string getItemsCSV();
     }
 
+    [Guid("1D92A9E9-A5BD-4a0c-962F-B463B4D2577F")]
+    [ComVisible(true)]
+    [ClassInterface(ClassInterfaceType.AutoDispatch)]
+    [AsyncProtocol(Name = "dsoe",Description = "DSO Economic Protocol")]
+    public class DSOE_URLProtocol :ProtocolBase,IInternetProtocol, IInternetProtocolRoot
+    {
+        public void Start(
+           [MarshalAs(UnmanagedType.LPWStr)] string szURL,
+          IInternetProtocolSink Sink,
+          IInternetBindInfo pOIBindInfo,
+          UInt32 grfPI,
+          UInt32 dwReserved)
+        {
+            MessageBox.Show("Test:"+szURL);
+            return;
+        }
+    }
+
     [Guid("B73E5033-0042-4b59-B9FF-1AD5267660C4")]
     [ClassInterface(ClassInterfaceType.None)]
-    [ProgId("DSO_Economic")]
+    [ProgId("DSO_Economic"), ComVisible(true)]
     public class DSOE_VBAInterface : IDSOE_VBAInterface
+
     {
         public DSOE_VBAInterface()
         {
@@ -693,4 +714,5 @@ namespace DSO_Economic
             }
         }
     }
+    
 }
