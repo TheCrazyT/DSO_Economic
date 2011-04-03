@@ -1,21 +1,12 @@
-Vorraussetzungen:
+Vorraussetzungen zur Nutzung des Quellcodes:
 ==============
 
-Git
+[Git](http://git-scm.com/)
 
 Microsoft Visual Studio
 
 [Zedgraph](http://sourceforge.net/projects/zedgraph/files/zedgraph%20dll%20only/)
 
-Programmierkenntnisse ;)
+[FlashABCRead](https://github.com/TheCrazyT/FlashABCRead)
 
-Funktionen:
-========
-<table>
-<tr>
-<td>findResources </td> <td> Findet alle Rohstoffe und Listet sie auf</td>
-</tr>
-<tr>
-<td> findItems </td> <td>Findet alle Gegenstände die momentan in eurem Besitz sind</td>
-</tr>
-</table>
+DSOEco.pfx (muss erstellt werden ... entweder unter Projekteigenschaften(Signierung,Assembly signieren) oder manuell)
