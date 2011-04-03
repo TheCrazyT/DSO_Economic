@@ -8,6 +8,9 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Configuration;
+using FlashABCRead;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Net;
 namespace DSO_Economic
 {
     class Global
@@ -25,7 +28,7 @@ namespace DSO_Economic
                 if (!ReadProcessMemory(Main.Handle, MainClass + 0x5c, mem, 4, ref br)) return false;
                 if (mem[0] == 0)
                     return false;
-                if (!ReadProcessMemory(Main.Handle,mem[0], mem, 4, ref br)) return false;
+                if (!ReadProcessMemory(Main.Handle, mem[0], mem, 4, ref br)) return false;
 
                 return true;
             }
@@ -34,7 +37,7 @@ namespace DSO_Economic
 
         public static MyProcessModule npswf = null;
         public static uint MainClass = 0;
-        public const uint LIST_MODULES_ALL = 0x03; 
+        public const uint LIST_MODULES_ALL = 0x03;
         public static MyProcess Main = null;
         public static List<String> itemnames;
         public static OdbcConnection DbConnection;
@@ -50,14 +53,50 @@ namespace DSO_Economic
 
         static public void init()
         {
-            Configuration conf=ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+            if (!File.Exists(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)+"\\fla.dat"))
+            {
+                if (MessageBox.Show("Datei fla.dat existiert nicht und muss heruntergeladen werden!", "", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) == DialogResult.Cancel)
+                {
+                    Environment.Exit(0);
+                    return;
+                }
+                WebRequest wr = WebRequest.Create("https://gist.github.com/raw/19cb07aa1f7949016d3d/69ad051281c80732c8a60cc1f519bc865206e568/gistfile1.txt");
+                WebResponse wrp = wr.GetResponse();
+                Stream s = wrp.GetResponseStream();
+                string url = Encoding.Default.GetString((new BinaryReader(s)).ReadBytes((int)wrp.ContentLength));
+                wr = WebRequest.Create(url);
+                wrp = wr.GetResponse();
+                s = wrp.GetResponseStream();
+                File.WriteAllBytes(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)+"\\fla.dat", new BinaryReader(s).ReadBytes((int)wrp.ContentLength));
+            }
+
+            List<string> classes = new List<string>();
+            classes.Add("cPlayerData");
+            classes.Add("cGeneralInterface");
+            classes.Add("cPlayerZoneScreen");
+            classes.Add("cStreetDataMap");
+            classes.Add("cBuilding");
+            classes.Add("dResource");
+            classes.Add("cResourceCreation");
+            classes.Add("cDeposit");
+            FlashRead.ReadCompressed(new StreamReader(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)+"\\fla.dat").BaseStream, classes);
+            if (fClass.Count == 0)
+            {
+                MessageBox.Show("Datei fla.dat vermutlich beschädigt lösche die Datei und versuche es erneut!", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            fClass.InitClasses();
+
+
+            Configuration conf = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location);
             foreach (ConnectionStringSettings cs in conf.ConnectionStrings.ConnectionStrings)
             {
                 cs.ConnectionString = cs.ConnectionString.Replace("|DataDirectory|", Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
             }
             if (conf.ConnectionStrings == null)
                 throw (new System.Exception("Konfigurationsdatei nicht geladen!"));
-            
+
             if (Params.usesqlite)
             {
                 DbConnection = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.SQLiteDB"].ConnectionString);
@@ -75,7 +114,7 @@ namespace DSO_Economic
                     if (!Params.usetxt)
                     {
                         if (conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"] == null)
-                            throw (new System.Exception("Konfigurationseintrag DSO_Economic.Properties.Settings.DataDB nicht geladen!\nPfad1:" + Application.ExecutablePath + "\nPfad2:" + Application.StartupPath + "\nPfad3:"+System.Reflection.Assembly.GetExecutingAssembly().Location));
+                            throw (new System.Exception("Konfigurationseintrag DSO_Economic.Properties.Settings.DataDB nicht geladen!\nPfad1:" + Application.ExecutablePath + "\nPfad2:" + Application.StartupPath + "\nPfad3:" + System.Reflection.Assembly.GetExecutingAssembly().Location));
 
                         DbConnection = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
                         DbConnection2 = new OdbcConnection(conf.ConnectionStrings.ConnectionStrings["DSO_Economic.Properties.Settings.DataDB"].ConnectionString);
@@ -110,18 +149,25 @@ namespace DSO_Economic
         }
         static public string export_buildings()
         {
-            string s="Name,PTime,Level,Active\r\n";
+            string s = "Name,PTime,Level,Active\r\n";
             foreach (CBuildingEntry b in buildingEntries)
             {
-                double ticks = b.ePTime - b.sPTime;
-                if ((b.ePTime == -1) || (b.sPTime == -1))
-                    ticks = 0;
+                double ticks = 0;
+                try
+                {
+                    ticks = b.ePTime - b.sPTime;
+                    if ((b.ePTime == -1) || (b.sPTime == -1))
+                        ticks = 0;
+                }
+                catch (EndOfStreamException err)
+                {
+                }
                 string a;
                 if (b.isActive)
                     a = "1";
                 else
                     a = "0";
-                s+=(b.Name + "," + (ticks / 1000) + "," + b.level + "," + a+"\r\n");
+                s += (b.Name + "," + Math.Round(ticks / 1000) + "," + b.level + "," + a + "\r\n");
             }
             return s;
         }
@@ -301,7 +347,7 @@ namespace DSO_Economic
 
             for (int i = 0; i < modhHandles.Length; i++)
             {
-                ModuleInfo modi=new ModuleInfo();
+                ModuleInfo modi = new ModuleInfo();
                 StringBuilder modName = new StringBuilder(256);
                 if (GetModuleFileNameEx(processHandle, modhHandles[i], modName, modName.Capacity) != 0)
                     if (GetModuleInformation(processHandle, modhHandles[i], out modi, System.Runtime.InteropServices.Marshal.SizeOf(modi)))
@@ -318,104 +364,93 @@ namespace DSO_Economic
             return modules;
         }
         #region MemorySearchFunctions
-        private static void findMainClass(IntPtr handle, uint[] mem, uint start, uint size)
+        private static void findMainClass(IntPtr handle, RemoteMemoryStream rms, uint start, uint size)
         {
+            rms.InitCache(start, start + size);
             Application.DoEvents();
-            uint i = 0;
-            uint v;
-            uint w;
-
-            for (i = 0; i < size - 0x5C; i += 4)
+            try
             {
-                v = mem[(i) / 4];
-                if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
-                    continue;
-                if (mem[(i + 0x20) / 4] > 40)
-                    continue;
-                if (mem[(i + 0x28) / 4] > 40)
-                    continue;
-                if (mem[(i + 0x2C) / 4] == 0)
-                    continue;
-                if (mem[(i + 0x30) / 4] > 40)
-                    continue;
-                if (mem[(i + 0x3C) / 4] > 40)
-                    continue;
-                v = mem[(i + 0x38) / 4];
-                w = mem[(i + 0x40) / 4];
-                if (w < v) continue;
-                if (v > 1000) continue;
-                if (w > 1000) continue;
-                if (w == 0) continue;
-
-                w = mem[(i + 0x5c) / 4];
-                w += 0x10;
-
-                uint br = 0;
-                uint[] mem2 = new uint[4];
-                if (!ReadProcessMemory(handle, w, mem2, 4 * 4, ref br)) continue;
-
-                if (mem2[0] != 44) continue;
-                if (mem2[1] != 46) continue;
-
-                uint starttbl = mem2[3];
-                if ((starttbl > (uint)npswf.BaseAddress) && (starttbl < (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
-                    continue;
-
-                uint sz = (uint)(4 * itemnames.Count);
-                mem2 = new uint[itemnames.Count + 1];
-                if (!ReadProcessMemory(handle, starttbl + 8, mem2, sz, ref br)) continue;
-
-                MainClass = start + i;
-                Debug.Print("Main class at: {0:x}", start + i);
-
-
-                Debug.Print("Table at: {0:x}", starttbl);
-                itemEntries = new List<CItemEntry>();
-                CItemEntry.reset();
-                for (int x = 0; x < itemnames.Count; x++)
+                uint i = 0;
+                uint v;
+                uint w;
+                BinaryReader binr = new BinaryReader(rms);
+                for (i = 0; i < size - 0x5C; i += 4)
                 {
-                    CItemEntry ie = new CItemEntry(mem2[x] & 0xFFFFFFF8);
-                    Debug.Print(ie.internName);
-                    itemEntries.Add(ie);
+                    rms.Seek(start + i, SeekOrigin.Begin);
+                    //v = mem[(i) / 4];
+                    v = binr.ReadUInt32();
+                    if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                        continue;
+
+                    rms.Seek(start+i, SeekOrigin.Begin);
+                    fClass player = new fClass(rms, "cPlayerData");
+                    if (player.gUINT("mGeologistsAmount") > 5) continue;
+                    if (player.gUINT("mExplorersAmount") > 5) continue;
+                    if (player.gUINT("mPlayerId") == 0) continue;
+                    if (player.gUINT("mPlayerLevel") > 40) continue;
+                    if (player.gUINT("mPlayerLevel") == 0) continue;
+                    if (player.gUINT("mGeneralsAmount") > 5) continue;
+                    v = player.gUINT("mCurrentBuildingsCountAll");
+                    w = player.gUINT("mCurrentMaximumBuildingsCountAll");
+                    if (w < v) continue;
+                    if (v == 0) continue;
+                    if (v > 1000) continue;
+                    if (w > 1000) continue;
+                    if (w == 0) continue;
+                    Debug.Print("Buildings {0}/{1}", w, v);
+                    Debug.Print("mResources_vector: {0:x}", player.gUINT("mResources_vector"));
+                    //if (w == 135) Debugger.Break();
+                    fClass items = player.gC("mResources_vector");
+                    itemEntries = new List<CItemEntry>();
+                    CItemEntry.reset();
+                    foreach (fClass it in items.getClassList("dResource"))
+                    {
+                        string n=it.gSTR("name_string");
+                        Debug.Print("{0} {1}", it.gINT("amount"), n);
+                        if((n!="Population")&&(n!="HardCurrency"))
+                            itemEntries.Add(new CItemEntry(it));
+                    }
+
+                    MainClass = start + i;
+                    Debug.Print("Main class at?: {0:x}", start + i);
+                    Debug.Print("{0:x} {1:x}", player.gUINT("mGeneralInterface.mCurrentPlayerZone"), player.gUINT("mGeneralInterface.CHEAT_KEYS"));
+
+                    fClass fdeposits = player.gC("mGeneralInterface.mCurrentPlayerZone.mStreetDataMap.mDeposits_vector");
+                    Debug.Print("Deposits at?: {0:x}", fdeposits.getOffset());
+
+                    foreach (fClass r in fdeposits.getClassList("cDeposit"))
+                    {
+                        CResourceEntry RE = new CResourceEntry(r);
+                        Debug.Print("{0}", RE.Name);
+                        if (!(((RE.Name == "Wood") || (RE.Name == "RealWood")) && !Params.trees))
+                            resourceEntries.Add(RE);
+                    }
+
+                    DbConnection3.Open();
+                    fClass fbuildings = player.gC("mGeneralInterface.mCurrentPlayerZone.mStreetDataMap.mBuildings_vector");
+                    Buildings = new Dictionary<String, uint>();
+                    buildingEntries = new List<CBuildingEntry>();
+                    Debug.Print("Buildings at?: {0:x}", fbuildings.getOffset());
+                    foreach (fClass b in fbuildings.getClassList("cBuilding"))
+                    {
+                        CBuildingEntry BE = new CBuildingEntry(b);
+                        Debug.Print("{0} {1} {2}", BE.Name, BE.X, BE.Y);
+                        if (!Buildings.ContainsKey(BE.Name))
+                            Buildings.Add(BE.Name, 1);
+                        else
+                            Buildings[BE.Name]++;
+                        buildingEntries.Add(BE);
+                    }
+                    DbConnection3.Close();
+
+                    MainClass = start + i;
+                    Debug.Print("Main class at: {0:x}", start + i);
+                    rms.RemoveCache();
                 }
-
-                mem2 = new uint[1];
-                uint[] mem3 = new uint[4];
-                if (!ReadProcessMemory(handle, MainClass + 0x84, mem2, 4, ref br)) continue;
-
-                if (!ReadProcessMemory(handle, mem2[0] + 0x1b8, mem2, 4, ref br)) continue;
-
-                if (!ReadProcessMemory(handle, mem2[0] + 0x6C, mem2, 4, ref br)) continue;
-
-
-                uint structureclass = mem2[0];
-
-                foreach (uint o in Flash.getOffsetList(structureclass + 0x14))
-                {
-                    CResourceEntry RE = new CResourceEntry(o);
-                    Debug.Print("Resource at: {0:x}", o);
-                    Debug.Print("{0}", RE.Name);
-                    if (!(((RE.Name == "Wood") || (RE.Name == "RealWood")) && !Params.trees))
-                        resourceEntries.Add(RE);
-                }
-
-
-                buildingEntries = new List<CBuildingEntry>();
-                Buildings = new Dictionary<String, uint>();
-
-                DbConnection3.Open();
-                foreach (uint o in Flash.getOffsetList(structureclass + 0x54))
-                {
-                    CBuildingEntry BE = new CBuildingEntry(o);
-                    Debug.Print("Building at: {0:x}", o);
-                    Debug.Print("{0} {1} {2}", BE.Name, BE.X, BE.Y);
-                    if (!Buildings.ContainsKey(BE.Name))
-                        Buildings.Add(BE.Name, 1);
-                    else
-                        Buildings[BE.Name]++;
-                    buildingEntries.Add(BE);
-                }
-                DbConnection3.Close();
+            }
+            catch (EndOfStreamException e)
+            {
+                return;
             }
             return;
         }
@@ -435,10 +470,10 @@ namespace DSO_Economic
                 processes = new string[] { "plugin-containe", "plugin-container" };
             foreach (string pname in processes)
             {
-                List<MyProcess> pList=new List<MyProcess>();
+                List<MyProcess> pList = new List<MyProcess>();
 
                 if (!isLinux)
-                    foreach(Process p in Process.GetProcessesByName(pname))
+                    foreach (Process p in Process.GetProcessesByName(pname))
                         pList.Add(new MyProcess(p));
                 else
                     foreach (LinuxProcess p in Linux.GetProcessesByName(pname))
@@ -495,9 +530,10 @@ namespace DSO_Economic
                     Debug.Print("End module list loop");
 
                     if (npswf == null) continue; //nix gefunden ... versuche es mit nächstem Prozess
-                    
+
                     Debug.Print("npswf found ...");
 
+                    RemoteMemoryStream rms = new RemoteMemoryStream(p.Handle);
                     uint size;
                     uint br = 0;
                     address = 0;
@@ -506,11 +542,6 @@ namespace DSO_Economic
                     {
                         result = VirtualQueryEx(p.Handle, (IntPtr)address, out m, (uint)Marshal.SizeOf(m));
                         if (!result) break; //am ende angekommen ... wir können aufhören
-                        /*if (m.AllocationBase == null)
-                        {
-                            address = (long)m.BaseAddress + (long)m.RegionSize;
-                            continue;
-                        }*/
 
                         Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", (long)m.BaseAddress, (long)m.BaseAddress + (long)m.RegionSize, m.RegionSize);
                         size = (uint)m.RegionSize;
@@ -519,27 +550,15 @@ namespace DSO_Economic
                             address = (long)m.BaseAddress + (long)m.RegionSize;
                             continue;
                         }
-                        uint[] mem = new uint[size / 4];
-                        if (!ReadProcessMemory(p.Handle, (IntPtr)m.BaseAddress, mem, size, ref br))
-                        {
-                            if (GetLastError() == 0x12b) //nur einen Teil ausgelesen
-                                size = br;
-                            else
-                            {
-                                Debug.Print("Last error:{0:x}", GetLastError());
-                                address = (long)m.BaseAddress + (long)m.RegionSize;
-                                continue;
-                            }
-                        }
                         if (size == 0)
                         {
                             address = (long)m.BaseAddress + (long)m.RegionSize;
                             continue;
                         }
+                        rms.Seek((long)m.BaseAddress, SeekOrigin.Begin);
+                        findMainClass(p.Handle, rms, (uint)m.BaseAddress, (uint)m.RegionSize);
 
-                        findMainClass(p.Handle, mem, (uint)m.BaseAddress, (uint)m.RegionSize);
-
-                        if ((Main != null) && (itemEntries.Count > 0)) break;
+                        if ((fClass.Count != 0) && (Main != null) && (itemEntries.Count > 0)) break;
 
                         address = (long)m.BaseAddress + (long)m.RegionSize;
 
@@ -635,9 +654,12 @@ namespace DSO_Economic
     [InterfaceType(ComInterfaceType.InterfaceIsIDispatch)]
     public interface IDSOE_VBAInterface
     {
-        [DispId(1)] string getBuildingsCSV();
-        [DispId(2)] string getResourcesCSV();
-        [DispId(3)] string getItemsCSV();
+        [DispId(1)]
+        string getBuildingsCSV();
+        [DispId(2)]
+        string getResourcesCSV();
+        [DispId(3)]
+        string getItemsCSV();
     }
 
     [Guid("B73E5033-0042-4b59-B9FF-1AD5267660C4")]

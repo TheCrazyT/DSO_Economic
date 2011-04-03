@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using System.Data.Odbc;
 using System.Diagnostics;
+using FlashABCRead;
+using System.IO;
 
 namespace DSO_Economic
 {
     public class CBuildingEntry
     {
-        public uint memoffset;
-        private uint RCoffset;
+        private fClass cls;
         public string Name;
 
         public double _loadedePTime=0;
@@ -20,24 +21,14 @@ namespace DSO_Economic
         {
             get
             {
-                uint br = 0;
-                uint[] mem = new uint[1];
-
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x78, mem, 4, ref br)) return 0;
-
-                return mem[0];
+                return cls.gUINT("mUpgradeLevel");
             }
         }
         public bool isActive
         {
             get
             {
-                uint br = 0;
-                uint[] mem = new uint[1];
-
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x70, mem, 4, ref br)) return false;
-
-                if (mem[0] == 1)
+                if (cls.gUINT("mProductionActive") == 1)
                     return true;
                 else
                     return false;
@@ -47,17 +38,7 @@ namespace DSO_Economic
         {
             get
             {
-                uint br = 0;
-                double[] mem = new double[1];
-
-                uint[] mem2 = new uint[4];
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0xB8, mem2, 4, ref br)) return 0;
-                RCoffset = mem2[0];
-
-                if (RCoffset == 0) return 0;
-                if (!Global.ReadProcessMemory(Global.Main.Handle, RCoffset + 0x68, mem, 8, ref br)) return 0;
-
-                double result = mem[0];
+                double result = cls.gDBL("mResourceCreation.startProductionTime");
                 if ((result == -1) || (result == 0)) return _loadedsPTime;
                 return result;
             }
@@ -66,59 +47,29 @@ namespace DSO_Economic
         {
             get
             {
-                uint br = 0;
-                double[] mem = new double[1];
-
-                uint[] mem2 = new uint[4];
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0xB8, mem2, 4, ref br)) return 0;
-                RCoffset = mem2[0];
-
-                
-                if (RCoffset == 0) return 0;
-                if (!Global.ReadProcessMemory(Global.Main.Handle, RCoffset + 0x70, mem, 8, ref br)) return 0;
-
-                double result = mem[0];
-                if ((result == -1) || (result == 0)) return _loadedePTime;
+                double result = cls.gDBL("mResourceCreation.endProductionTime");
+                if ((result == -1) || (result == 0)) return _loadedsPTime;
                 return result;
             }
         }
-        public double X
+        public uint X
         {
             get
             {
-                uint br = 0;
-                double[] mem = new double[1];
-
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x20, mem, 8, ref br)) return 0;
-
-                return mem[0];
+                return cls.gUINT("mBuildingGrid");
             }
         }
-        public double Y
+        public uint Y
         {
             get
             {
-                uint br = 0;
-                double[] mem = new double[1];
-
-                if (!Global.ReadProcessMemory(Global.Main.Handle, memoffset + 0x28, mem, 8, ref br)) return 0;
-
-                return mem[0];
+                return 0;
             }
         }
-        public CBuildingEntry(uint offset)
+        public CBuildingEntry(fClass c)
         {
-            Name = "";
-            this.memoffset = offset;
-
-            uint br = 0;
-            uint[] mem2 = new uint[4];
-
-            Name = Flash.getString(offset + 0x9C);
-
-            if (!Global.ReadProcessMemory(Global.Main.Handle, offset + 0xB4, mem2,4, ref br)) return;
-            RCoffset = mem2[0];
-            load();
+            this.cls = c;
+            Name = cls.gSTR("mBuildingName_string");
         }
         public void load()
         {
@@ -141,30 +92,37 @@ namespace DSO_Economic
         }
         public void save()
         {
-            if ((ePTime == 0) || (sPTime == 0)) return;
-            if ((ePTime == -1) || (sPTime == -1)) return;
-            OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();
-            DbCommand.CommandText = "INSERT INTO BuildingProductionTimes (X,Y,sPTime,ePTime) VALUES (?,?,?,?)";
-            DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
-            DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
-            DbCommand.Parameters.Add("sPTime", OdbcType.Double).Value = sPTime;
-            DbCommand.Parameters.Add("ePTime", OdbcType.Double).Value = ePTime;
             try
             {
+                if ((ePTime == 0) || (sPTime == 0)) return;
+                if ((ePTime == -1) || (sPTime == -1)) return;
+                OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();
+                DbCommand.CommandText = "INSERT INTO BuildingProductionTimes (X,Y,sPTime,ePTime) VALUES (?,?,?,?)";
+                DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
+                DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
+                DbCommand.Parameters.Add("sPTime", OdbcType.Double).Value = sPTime;
+                DbCommand.Parameters.Add("ePTime", OdbcType.Double).Value = ePTime;
+                try
+                {
+                    DbCommand.ExecuteNonQuery();
+                }
+                catch (OdbcException error)
+                {
+                    Debug.Write(error);
+                }
+
+                DbCommand = Global.DbConnection3.CreateCommand();
+                DbCommand.CommandText = "UPDATE BuildingProductionTimes SET sPTime=?,ePTime=? WHERE X=? AND Y=?";
+                DbCommand.Parameters.Add("sPTime", OdbcType.Double).Value = sPTime;
+                DbCommand.Parameters.Add("ePTime", OdbcType.Double).Value = ePTime;
+                DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
+                DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
                 DbCommand.ExecuteNonQuery();
             }
-            catch (OdbcException error)
+            catch (EndOfStreamException e)
             {
-                Debug.Write(error);
+                Debug.Print("{0}", e);
             }
-
-            DbCommand = Global.DbConnection3.CreateCommand();
-            DbCommand.CommandText = "UPDATE BuildingProductionTimes SET sPTime=?,ePTime=? WHERE X=? AND Y=?";
-            DbCommand.Parameters.Add("sPTime", OdbcType.Double).Value = sPTime;
-            DbCommand.Parameters.Add("ePTime", OdbcType.Double).Value = ePTime;
-            DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
-            DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
-            DbCommand.ExecuteNonQuery();
         }
     }
 }

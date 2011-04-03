@@ -2,22 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
+using FlashABCRead;
 
 namespace DSO_Economic
 {
     public class CResourceEntry : IComparable
     {
-        private long memoffset;
+        private fClass cls;
         public long amount
         {
             get
             {
-                UInt32 br = 0;
-                uint[] mem = new uint[(0x40 + 0x18) / 4];
-                Global.ReadProcessMemory(Global.Main.Handle, (IntPtr)(memoffset), mem, 0x18 + 0x40, ref br);
-                if ((int)mem[0x40 / 4] == 2)
-                    return mem[0x48 / 4];
-                return 0;
+                return cls.gUINT("mAmount");
             }
         }
         private uint _ID;
@@ -44,13 +40,12 @@ namespace DSO_Economic
                 return _ID;
             }
         }
-        public CResourceEntry(uint offset)
+        public CResourceEntry(fClass c)
         {
             this._ID = lastresourceEntriesID;
             lastresourceEntriesID++;
-            this.memoffset = offset;
-
-            Name=Flash.getString(offset + 0x5C);
+            this.cls = c;
+            Name = cls.gSTR("mName_string");
         }
         public int CompareTo(object obj)
         {
@@ -62,7 +57,7 @@ namespace DSO_Economic
             {
                 UInt32 br = 0;
                 uint[] mem = new uint[(0x40+0x18) / 4];
-                if ((Global.Main != null) && (memoffset != 0))
+                if ((Global.Main != null))
                 {
                         string n = "";
                         switch (Name)
@@ -105,7 +100,6 @@ namespace DSO_Economic
                         }
                         return n + ": " + amount;
                 }
-                Debug.Print("ID:{0} memoffset:{1:x}", ID, memoffset);
                 return "";
             }
         }

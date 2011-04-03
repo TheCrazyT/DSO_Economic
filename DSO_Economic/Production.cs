@@ -171,7 +171,7 @@ Longbow
         public bool createProductionSteps(string resource,uint timelimit)
         {
             productionSteps = new List<CProductionStep>();
-            for (int i = 0; i < Global.itemEntries.Count; i++)
+            for (int i = 0; i < resourceList.Count; i++)
                 resourceList[i].amount = Global.itemEntries[i].amount;
             max = Global.itemEntries[0].max;
             foreach (CProductionBuilding pb in getBuildingChain(resource))

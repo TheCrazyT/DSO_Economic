@@ -2,6 +2,7 @@
 using System.Data.Odbc;
 using System.Data.ProviderBase;
 using System;
+using System.Net;
 using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,6 +14,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using ZedGraph;
 using System.Xml.Serialization;
+using FlashABCRead;
 
 namespace DSO_Economic
 {
@@ -156,8 +158,10 @@ namespace DSO_Economic
             #endregion
 
             Loading LDForm = new Loading();
+            LDForm.Cursor = Cursors.WaitCursor;
             LDForm.Show();
             Global.init();
+            LDForm.Cursor = Cursors.WaitCursor;
 
             if (!Global.connect())
             {
@@ -338,39 +342,45 @@ namespace DSO_Economic
             if (lst_buildings.SelectedIndex == -1) return;
             if (!Global.connected) return;
 
-            lst_production.Items.Clear();
-            uint i = 0;
-            foreach (CBuildingEntry b in Global.buildingEntries)
-                if (b.Name == ((CNameValue)lst_buildings.SelectedItem).Value)
-                {
-                    ListViewItem lve = new ListViewItem();
-                    lve.Text = b.Name + i.ToString();
-                    i++;
-                    lst_production.Items.Add(lve);
-                    if (b == null) continue;
-                    if ((b.ePTime != -1) && (b.sPTime != -1))
+            try
+            {
+                lst_production.Items.Clear();
+                uint i = 0;
+                foreach (CBuildingEntry b in Global.buildingEntries)
+                    if (b.Name == ((CNameValue)lst_buildings.SelectedItem).Value)
                     {
-                        double ticks = b.ePTime - b.sPTime;
-                        Debug.Print(b.Name);
-                        Debug.Print("{0:x}", b.memoffset);
-                        Debug.Print("{0}", DateTime.Now.Ticks);
-                        Debug.Print("{0}", ticks);
-                        Debug.Print("{0}", b.ePTime);
-                        Debug.Print("{0}", b.sPTime);
-                        Debug.Print("{0}", DateTime.Now.Ticks / b.ePTime);
-                        Debug.Print("{0}", DateTime.Now.Ticks / b.sPTime);
-                        Debug.Print("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60);
+                        ListViewItem lve = new ListViewItem();
+                        lve.Text = b.Name + i.ToString();
+                        i++;
+                        lst_production.Items.Add(lve);
+                        if (b == null) continue;
+                        if ((b.ePTime != -1) && (b.sPTime != -1))
+                        {
+                            double ticks = b.ePTime - b.sPTime;
+                            Debug.Print(b.Name);
+                            Debug.Print("{0}", DateTime.Now.Ticks);
+                            Debug.Print("{0}", ticks);
+                            Debug.Print("{0}", b.ePTime);
+                            Debug.Print("{0}", b.sPTime);
+                            Debug.Print("{0}", DateTime.Now.Ticks / b.ePTime);
+                            Debug.Print("{0}", DateTime.Now.Ticks / b.sPTime);
+                            Debug.Print("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60);
 
-                        lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60));
+                            lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60));
+                        }
+                        else
+                            lve.SubItems.Add("");
+                        lve.SubItems.Add(b.level.ToString());
+                        if (b.isActive)
+                            lve.SubItems.Add("ja");
+                        else
+                            lve.SubItems.Add("nein");
                     }
-                    else
-                        lve.SubItems.Add("");
-                    lve.SubItems.Add(b.level.ToString());
-                    if (b.isActive)
-                        lve.SubItems.Add("ja");
-                    else
-                        lve.SubItems.Add("nein");
-                }
+            }
+            catch (EndOfStreamException er)
+            {
+                Debug.Print("{0}",er);
+            }
         }
 
         private void btn_export_Click(object sender, EventArgs e)
