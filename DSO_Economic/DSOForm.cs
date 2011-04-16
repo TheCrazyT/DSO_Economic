@@ -92,6 +92,7 @@ namespace DSO_Economic
             uint h = 0;
 
             #region ParamChecks
+            Params.buildingsonly = true;
             foreach (string arg in args)
             {
                 switch (arg)

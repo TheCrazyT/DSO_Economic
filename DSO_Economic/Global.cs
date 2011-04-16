@@ -61,7 +61,7 @@ namespace DSO_Economic
                     Environment.Exit(0);
                     return;
                 }
-                WebRequest wr = WebRequest.Create("https://gist.github.com/raw/19cb07aa1f7949016d3d/69ad051281c80732c8a60cc1f519bc865206e568/gistfile1.txt");
+                WebRequest wr = WebRequest.Create("https://gist.github.com/raw/19cb07aa1f7949016d3d/gistfile1.txt");
                 WebResponse wrp = wr.GetResponse();
                 Stream s = wrp.GetResponseStream();
                 string url = Encoding.Default.GetString((new BinaryReader(s)).ReadBytes((int)wrp.ContentLength));
@@ -397,8 +397,9 @@ namespace DSO_Economic
                     if (v > 1000) continue;
                     if (w > 1000) continue;
                     if (w == 0) continue;
+                    Debug.Print("Main class at?: {0:x}", start + i);
                     Debug.Print("Buildings {0}/{1}", w, v);
-                    Debug.Print("mResources_vector: {0:x}", player.gUINT("mResources_vector"));
+                    /*Debug.Print("mResources_vector: {0:x}", player.gUINT("mResources_vector"));
                     //if (w == 135) Debugger.Break();
                     fClass items = player.gC("mResources_vector");
                     itemEntries = new List<CItemEntry>();
@@ -409,10 +410,9 @@ namespace DSO_Economic
                         Debug.Print("{0} {1}", it.gINT("amount"), n);
                         if((n!="Population")&&(n!="HardCurrency"))
                             itemEntries.Add(new CItemEntry(it));
-                    }
+                    }*/
 
                     MainClass = start + i;
-                    Debug.Print("Main class at?: {0:x}", start + i);
                     Debug.Print("{0:x} {1:x}", player.gUINT("mGeneralInterface.mCurrentPlayerZone"), player.gUINT("mGeneralInterface.CHEAT_KEYS"));
 
                     fClass fdeposits = player.gC("mGeneralInterface.mCurrentPlayerZone.mStreetDataMap.mDeposits_vector");
@@ -558,18 +558,18 @@ namespace DSO_Economic
                         rms.Seek((long)m.BaseAddress, SeekOrigin.Begin);
                         findMainClass(p.Handle, rms, (uint)m.BaseAddress, (uint)m.RegionSize);
 
-                        if ((fClass.Count != 0) && (Main != null) && (itemEntries.Count > 0)) break;
+                        if ((fClass.Count != 0) && (Main != null) && ((itemEntries.Count > 0) && (!Params.buildingsonly))) break;
 
                         address = (long)m.BaseAddress + (long)m.RegionSize;
 
                     } while (address <= MaxAddress);
 
-                    if ((Main != null) && (itemEntries.Count > 0)) break;
+                    if ((Main != null) && (itemEntries.Count > 0 && (!Params.buildingsonly))) break;
                 }
-                if ((Main != null) && (itemEntries.Count > 0)) break;
+                if ((Main != null) && ((itemEntries.Count > 0) && (!Params.buildingsonly))) break;
             }
 
-            if ((Main == null) || (itemEntries.Count == 0))
+            if ((Main == null) || ((itemEntries.Count == 0) && (!Params.buildingsonly)))
             {
                 string errorcode = "";
                 if (Main == null)
