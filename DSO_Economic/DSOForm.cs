@@ -448,6 +448,28 @@ namespace DSO_Economic
             this.status.Text = "keine Verbindung!";
         }
 
+        private void btn_export_clipboard_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText(Global.export_buildings(), TextDataFormat.Text);
+        }
+
+        private void tsmi_forum_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("http://forum.diesiedleronline.de/threads/6397-Tool-Programm-zur-Auswertung-der-Rohstoffproduktion"); 
+        }
+
+        private void tsmi_wiki_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/TheCrazyT/DSO_Economic/wiki"); 
+        }
+
+        private void tsmi_source_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/TheCrazyT/DSO_Economic/");
+        }
+
+
+
     }
     public class CNameValue
     {

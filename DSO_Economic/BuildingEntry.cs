@@ -39,7 +39,7 @@ namespace DSO_Economic
             get
             {
                 double result = cls.gDBL("mResourceCreation.startProductionTime");
-                if ((result == -1) || (result == 0)) return _loadedsPTime;
+                if ((result == -1) || (result == 0)) return _loadedsPTime == 0 ? -1 : _loadedsPTime;
                 return result;
             }
         }
@@ -48,7 +48,7 @@ namespace DSO_Economic
             get
             {
                 double result = cls.gDBL("mResourceCreation.endProductionTime");
-                if ((result == -1) || (result == 0)) return _loadedsPTime;
+                if ((result == -1) || (result == 0)) return _loadedePTime == 0 ? -1 : _loadedePTime;
                 return result;
             }
         }

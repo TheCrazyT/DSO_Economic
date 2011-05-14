@@ -43,6 +43,7 @@
             this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
             this.tabPage_Buildings = new System.Windows.Forms.TabPage();
+            this.btn_export_clipboard = new System.Windows.Forms.Button();
             this.btn_export = new System.Windows.Forms.Button();
             this.lst_production = new System.Windows.Forms.ListView();
             this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
@@ -55,11 +56,17 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.status = new System.Windows.Forms.ToolStripStatusLabel();
             this.btn_reconnect = new System.Windows.Forms.Button();
+            this.mainMenu = new System.Windows.Forms.MenuStrip();
+            this.tsmi_help = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmi_forum = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmi_wiki = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmi_source = new System.Windows.Forms.ToolStripMenuItem();
             this.tabCtrl.SuspendLayout();
             this.tabPage_Items.SuspendLayout();
             this.tabPage_Time.SuspendLayout();
             this.tabPage_Buildings.SuspendLayout();
             this.statusStrip1.SuspendLayout();
+            this.mainMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // ItemRefresh
@@ -69,16 +76,15 @@
             // 
             // tabCtrl
             // 
-            this.tabCtrl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
+            this.tabCtrl.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.tabCtrl.Controls.Add(this.tabPage_Items);
             this.tabCtrl.Controls.Add(this.tabPage_Time);
             this.tabCtrl.Controls.Add(this.tabPage_Buildings);
-            this.tabCtrl.Location = new System.Drawing.Point(1, 1);
+            this.tabCtrl.Location = new System.Drawing.Point(1, 27);
             this.tabCtrl.Name = "tabCtrl";
             this.tabCtrl.SelectedIndex = 0;
-            this.tabCtrl.Size = new System.Drawing.Size(758, 620);
+            this.tabCtrl.Size = new System.Drawing.Size(758, 594);
             this.tabCtrl.TabIndex = 5;
             this.tabCtrl.Selected += new System.Windows.Forms.TabControlEventHandler(this.tabCtrl_Selected);
             // 
@@ -92,7 +98,7 @@
             this.tabPage_Items.Location = new System.Drawing.Point(4, 22);
             this.tabPage_Items.Name = "tabPage_Items";
             this.tabPage_Items.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_Items.Size = new System.Drawing.Size(750, 594);
+            this.tabPage_Items.Size = new System.Drawing.Size(750, 568);
             this.tabPage_Items.TabIndex = 0;
             this.tabPage_Items.Text = "Graph";
             this.tabPage_Items.UseVisualStyleBackColor = true;
@@ -122,7 +128,7 @@
             this.resources.FormattingEnabled = true;
             this.resources.Location = new System.Drawing.Point(137, 31);
             this.resources.Name = "resources";
-            this.resources.Size = new System.Drawing.Size(124, 550);
+            this.resources.Size = new System.Drawing.Size(124, 524);
             this.resources.TabIndex = 7;
             // 
             // graph
@@ -141,7 +147,7 @@
             this.graph.ScrollMinX = 0;
             this.graph.ScrollMinY = 0;
             this.graph.ScrollMinY2 = 0;
-            this.graph.Size = new System.Drawing.Size(474, 576);
+            this.graph.Size = new System.Drawing.Size(474, 557);
             this.graph.TabIndex = 6;
             // 
             // items
@@ -151,7 +157,7 @@
             this.items.FormattingEnabled = true;
             this.items.Location = new System.Drawing.Point(14, 31);
             this.items.Name = "items";
-            this.items.Size = new System.Drawing.Size(117, 550);
+            this.items.Size = new System.Drawing.Size(117, 524);
             this.items.TabIndex = 5;
             this.items.SelectedValueChanged += new System.EventHandler(this.items_SelectedValueChanged);
             // 
@@ -161,7 +167,7 @@
             this.tabPage_Time.Location = new System.Drawing.Point(4, 22);
             this.tabPage_Time.Name = "tabPage_Time";
             this.tabPage_Time.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_Time.Size = new System.Drawing.Size(750, 594);
+            this.tabPage_Time.Size = new System.Drawing.Size(750, 568);
             this.tabPage_Time.TabIndex = 1;
             this.tabPage_Time.Text = "Zeitübersicht";
             this.tabPage_Time.UseVisualStyleBackColor = true;
@@ -178,7 +184,7 @@
             this.itemsOverview.GridLines = true;
             this.itemsOverview.Location = new System.Drawing.Point(0, 0);
             this.itemsOverview.Name = "itemsOverview";
-            this.itemsOverview.Size = new System.Drawing.Size(749, 600);
+            this.itemsOverview.Size = new System.Drawing.Size(749, 566);
             this.itemsOverview.TabIndex = 0;
             this.itemsOverview.UseCompatibleStateImageBehavior = false;
             this.itemsOverview.View = System.Windows.Forms.View.Details;
@@ -200,24 +206,36 @@
             // 
             // tabPage_Buildings
             // 
+            this.tabPage_Buildings.Controls.Add(this.btn_export_clipboard);
             this.tabPage_Buildings.Controls.Add(this.btn_export);
             this.tabPage_Buildings.Controls.Add(this.lst_production);
             this.tabPage_Buildings.Controls.Add(this.lst_buildings);
             this.tabPage_Buildings.Location = new System.Drawing.Point(4, 22);
             this.tabPage_Buildings.Name = "tabPage_Buildings";
-            this.tabPage_Buildings.Size = new System.Drawing.Size(750, 594);
+            this.tabPage_Buildings.Size = new System.Drawing.Size(750, 568);
             this.tabPage_Buildings.TabIndex = 2;
             this.tabPage_Buildings.Text = "Gebäude";
             this.tabPage_Buildings.UseVisualStyleBackColor = true;
             // 
+            // btn_export_clipboard
+            // 
+            this.btn_export_clipboard.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_export_clipboard.Location = new System.Drawing.Point(7, 523);
+            this.btn_export_clipboard.Name = "btn_export_clipboard";
+            this.btn_export_clipboard.Size = new System.Drawing.Size(186, 36);
+            this.btn_export_clipboard.TabIndex = 7;
+            this.btn_export_clipboard.Text = "Als CSV in die Zwischenablage exportieren";
+            this.btn_export_clipboard.UseVisualStyleBackColor = true;
+            this.btn_export_clipboard.Click += new System.EventHandler(this.btn_export_clipboard_Click);
+            // 
             // btn_export
             // 
             this.btn_export.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btn_export.Location = new System.Drawing.Point(7, 568);
+            this.btn_export.Location = new System.Drawing.Point(7, 494);
             this.btn_export.Name = "btn_export";
             this.btn_export.Size = new System.Drawing.Size(186, 23);
             this.btn_export.TabIndex = 6;
-            this.btn_export.Text = "Als CSV exportieren";
+            this.btn_export.Text = "Als CSV in eine Datei exportieren";
             this.btn_export.UseVisualStyleBackColor = true;
             this.btn_export.Click += new System.EventHandler(this.btn_export_Click);
             // 
@@ -233,7 +251,7 @@
             this.columnHeader7});
             this.lst_production.Location = new System.Drawing.Point(202, 3);
             this.lst_production.Name = "lst_production";
-            this.lst_production.Size = new System.Drawing.Size(540, 588);
+            this.lst_production.Size = new System.Drawing.Size(540, 562);
             this.lst_production.TabIndex = 5;
             this.lst_production.UseCompatibleStateImageBehavior = false;
             this.lst_production.View = System.Windows.Forms.View.Details;
@@ -264,7 +282,7 @@
             this.lst_buildings.FormattingEnabled = true;
             this.lst_buildings.Location = new System.Drawing.Point(7, 3);
             this.lst_buildings.Name = "lst_buildings";
-            this.lst_buildings.Size = new System.Drawing.Size(186, 563);
+            this.lst_buildings.Size = new System.Drawing.Size(186, 485);
             this.lst_buildings.TabIndex = 0;
             this.lst_buildings.SelectedIndexChanged += new System.EventHandler(this.lst_buildings_SelectedIndexChanged);
             // 
@@ -305,6 +323,47 @@
             this.btn_reconnect.UseVisualStyleBackColor = true;
             this.btn_reconnect.Click += new System.EventHandler(this.btn_reconnect_Click);
             // 
+            // mainMenu
+            // 
+            this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmi_help});
+            this.mainMenu.Location = new System.Drawing.Point(0, 0);
+            this.mainMenu.Name = "mainMenu";
+            this.mainMenu.Size = new System.Drawing.Size(759, 24);
+            this.mainMenu.TabIndex = 8;
+            this.mainMenu.Text = "menuStrip1";
+            // 
+            // tsmi_help
+            // 
+            this.tsmi_help.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmi_forum,
+            this.tsmi_wiki,
+            this.tsmi_source});
+            this.tsmi_help.Name = "tsmi_help";
+            this.tsmi_help.Size = new System.Drawing.Size(40, 20);
+            this.tsmi_help.Text = "&Hilfe";
+            // 
+            // tsmi_forum
+            // 
+            this.tsmi_forum.Name = "tsmi_forum";
+            this.tsmi_forum.Size = new System.Drawing.Size(171, 22);
+            this.tsmi_forum.Text = "&zum Forumeintrag";
+            this.tsmi_forum.Click += new System.EventHandler(this.tsmi_forum_Click);
+            // 
+            // tsmi_wiki
+            // 
+            this.tsmi_wiki.Name = "tsmi_wiki";
+            this.tsmi_wiki.Size = new System.Drawing.Size(171, 22);
+            this.tsmi_wiki.Text = "zum &Wiki-Eintrag";
+            this.tsmi_wiki.Click += new System.EventHandler(this.tsmi_wiki_Click);
+            // 
+            // tsmi_source
+            // 
+            this.tsmi_source.Name = "tsmi_source";
+            this.tsmi_source.Size = new System.Drawing.Size(171, 22);
+            this.tsmi_source.Text = "&Quellcode";
+            this.tsmi_source.Click += new System.EventHandler(this.tsmi_source_Click);
+            // 
             // DSOEForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -313,6 +372,8 @@
             this.Controls.Add(this.btn_reconnect);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.tabCtrl);
+            this.Controls.Add(this.mainMenu);
+            this.MainMenuStrip = this.mainMenu;
             this.Name = "DSOEForm";
             this.Load += new System.EventHandler(this.DSOEForm_Load);
             this.tabCtrl.ResumeLayout(false);
@@ -322,6 +383,8 @@
             this.tabPage_Buildings.ResumeLayout(false);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.mainMenu.ResumeLayout(false);
+            this.mainMenu.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -355,6 +418,12 @@
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel status;
         private System.Windows.Forms.Button btn_reconnect;
+        private System.Windows.Forms.Button btn_export_clipboard;
+        private System.Windows.Forms.MenuStrip mainMenu;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_help;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_forum;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_wiki;
+        private System.Windows.Forms.ToolStripMenuItem tsmi_source;
     }
 }
 

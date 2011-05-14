@@ -25,10 +25,10 @@ namespace DSO_Economic
                 if (!ReadProcessMemory(Main.Handle, MainClass, mem, 4, ref br)) return false;
                 if ((mem[0] < (uint)npswf.BaseAddress) || (mem[0] > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                     return false;
-                if (!ReadProcessMemory(Main.Handle, MainClass + 0x5c, mem, 4, ref br)) return false;
+                /*if (!ReadProcessMemory(Main.Handle, MainClass + 0x5c, mem, 4, ref br)) return false;
                 if (mem[0] == 0)
                     return false;
-                if (!ReadProcessMemory(Main.Handle, mem[0], mem, 4, ref br)) return false;
+                if (!ReadProcessMemory(Main.Handle, mem[0], mem, 4, ref br)) return false;*/
 
                 return true;
             }
@@ -382,8 +382,22 @@ namespace DSO_Economic
                     if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                         continue;
 
+
                     rms.Seek(start+i, SeekOrigin.Begin);
                     fClass player = new fClass(rms, "cPlayerData");
+
+                    /*if (start + i > 0xBEF0000)
+                    {
+                        v = binr.ReadUInt32();
+                        v = binr.ReadUInt32();
+                        if ((v & 0xFFFF) == 4)
+                        {
+                            string s = player.getClassName();
+                            if (s != "")
+                                Debug.Print("{0:x} Classname {1}",start+i, s);
+                        }
+                    }*/
+
                     if (player.gUINT("mGeologistsAmount") > 5) continue;
                     if (player.gUINT("mExplorersAmount") > 5) continue;
                     if (player.gUINT("mPlayerId") == 0) continue;
