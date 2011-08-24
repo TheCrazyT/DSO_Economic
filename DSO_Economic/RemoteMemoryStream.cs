@@ -55,8 +55,11 @@ namespace DSO_Economic
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if(offset!=0)
-                throw new Exception("Not implemented");
+            if (offset != 0)
+            {
+                pos = offset;
+            }
+                //throw new Exception("Not implemented");
             uint br = 0;
             if ((cache != null)&&(pos>=cache_start)&&(pos<=cache_end))
             {

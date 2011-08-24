@@ -16,6 +16,7 @@ namespace DSO_Economic
     class Global
     {
         public static bool isLinux;
+        private static uint SwfClassToken;
         public static bool connected
         {
             get
@@ -80,6 +81,8 @@ namespace DSO_Economic
             classes.Add("dResource");
             classes.Add("cResourceCreation");
             classes.Add("cDeposit");
+            classes.Add("cResources");
+            //classes.Add("gEconomics");
             FlashRead.ReadCompressed(new StreamReader(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)+"\\fla.dat").BaseStream, classes);
             if (fClass.Count == 0)
             {
@@ -364,7 +367,7 @@ namespace DSO_Economic
             return modules;
         }
         #region MemorySearchFunctions
-        private static void findMainClass(IntPtr handle, RemoteMemoryStream rms, uint start, uint size)
+        /*private static void findItemsClass(IntPtr handle, RemoteMemoryStream rms, uint start, uint size)
         {
             rms.InitCache(start, start + size);
             Application.DoEvents();
@@ -379,9 +382,48 @@ namespace DSO_Economic
                     rms.Seek(start + i, SeekOrigin.Begin);
                     //v = mem[(i) / 4];
                     v = binr.ReadUInt32();
-                    if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                    if (v != SwfClassToken)
                         continue;
 
+                    rms.Seek(start + i, SeekOrigin.Begin);
+                    fClass economic = new fClass(rms, "mResources_vector");
+
+                    fClass items = economic.gC("mResources_vector");
+                    itemEntries = new List<CItemEntry>();
+                    CItemEntry.reset();
+                    foreach (fClass it in items.getClassList("dResourceDefaultDefinition"))
+                    {
+                        string n = it.gSTR("resourceName_string");
+                        Debug.Print("{0} {1}", it.gINT("amount"), n);
+                        if ((n != "Population") && (n != "HardCurrency"))
+                            itemEntries.Add(new CItemEntry(it));
+                    }
+                }
+            }
+            catch (EndOfStreamException e)
+            {
+                return;
+            }
+        }*/
+        private static void findMainClass(IntPtr handle, RemoteMemoryStream rms, uint start, uint size)
+        {
+            rms.InitCache(start, start + size);
+            Application.DoEvents();
+            try
+            {
+                uint i = 0;
+                uint v;
+                uint w;
+                uint swftoken;
+                BinaryReader binr = new BinaryReader(rms);
+                for (i = 0; i < size - 0x5C; i += 4)
+                {
+                    rms.Seek(start + i, SeekOrigin.Begin);
+                    //v = mem[(i) / 4];
+                    v = binr.ReadUInt32();
+                    if ((v < (uint)npswf.BaseAddress) || (v > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
+                        continue;
+                    swftoken = v;
 
                     rms.Seek(start+i, SeekOrigin.Begin);
                     fClass player = new fClass(rms, "cPlayerData");
@@ -413,9 +455,11 @@ namespace DSO_Economic
                     if (w == 0) continue;
                     Debug.Print("Main class at?: {0:x}", start + i);
                     Debug.Print("Buildings {0}/{1}", w, v);
-                    /*Debug.Print("mResources_vector: {0:x}", player.gUINT("mResources_vector"));
+
                     //if (w == 135) Debugger.Break();
-                    fClass items = player.gC("mResources_vector");
+                    fClass resources = player.gO("mGeneralInterface.mCurrentPlayerZone.map_PlayerID_Resources", player.gUINT("mPlayerId"), "cResources");
+                    fClass items = resources.gC("mResources_vector");
+                    Debug.Print("mResources_vector: {0:x}", resources.gUINT("mResources_vector"));
                     itemEntries = new List<CItemEntry>();
                     CItemEntry.reset();
                     foreach (fClass it in items.getClassList("dResource"))
@@ -424,7 +468,7 @@ namespace DSO_Economic
                         Debug.Print("{0} {1}", it.gINT("amount"), n);
                         if((n!="Population")&&(n!="HardCurrency"))
                             itemEntries.Add(new CItemEntry(it));
-                    }*/
+                    }
 
                     MainClass = start + i;
                     Debug.Print("{0:x} {1:x}", player.gUINT("mGeneralInterface.mCurrentPlayerZone"), player.gUINT("mGeneralInterface.CHEAT_KEYS"));
@@ -458,7 +502,10 @@ namespace DSO_Economic
                     DbConnection3.Close();
 
                     MainClass = start + i;
+                    SwfClassToken = swftoken;
                     Debug.Print("Main class at: {0:x}", start + i);
+
+                    Debug.Print("{0:x}", player.gC("mGeneralInterface.mCurrentPlayerZone").getOffset());
                     rms.RemoveCache();
                 }
             }
@@ -570,9 +617,14 @@ namespace DSO_Economic
                             continue;
                         }
                         rms.Seek((long)m.BaseAddress, SeekOrigin.Begin);
+                        
                         findMainClass(p.Handle, rms, (uint)m.BaseAddress, (uint)m.RegionSize);
+                        if (buildingEntries!=null)
+                        {
+                            break;
+                        }
 
-                        if ((fClass.Count != 0) && (Main != null) && ((itemEntries.Count > 0) && (!Params.buildingsonly))) break;
+                        //if ((fClass.Count != 0) && (Main != null) && ((itemEntries.Count > 0) && (!Params.buildingsonly))) break;
 
                         address = (long)m.BaseAddress + (long)m.RegionSize;
 
