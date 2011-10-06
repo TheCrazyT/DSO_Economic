@@ -78,6 +78,7 @@ namespace DSO_Economic
             classes.Add("cPlayerZoneScreen");
             classes.Add("cStreetDataMap");
             classes.Add("cBuilding");
+            classes.Add("cBuff");
             classes.Add("dResource");
             classes.Add("cResourceCreation");
             classes.Add("cDeposit");
@@ -440,12 +441,12 @@ namespace DSO_Economic
                         }
                     }*/
 
-                    if (player.gUINT("mGeologistsAmount") > 5) continue;
-                    if (player.gUINT("mExplorersAmount") > 5) continue;
+                    if (player.gUINT("mGeologistsAmount") > 25) continue;
+                    if (player.gUINT("mExplorersAmount") > 25) continue;
                     if (player.gUINT("mPlayerId") == 0) continue;
-                    if (player.gUINT("mPlayerLevel") > 40) continue;
+                    if (player.gUINT("mPlayerLevel") > 50) continue;
                     if (player.gUINT("mPlayerLevel") == 0) continue;
-                    if (player.gUINT("mGeneralsAmount") > 5) continue;
+                    if (player.gUINT("mGeneralsAmount") > 25) continue;
                     v = player.gUINT("mCurrentBuildingsCountAll");
                     w = player.gUINT("mCurrentMaximumBuildingsCountAll");
                     if (w < v) continue;
@@ -458,6 +459,7 @@ namespace DSO_Economic
 
                     //if (w == 135) Debugger.Break();
                     fClass resources = player.gO("mGeneralInterface.mCurrentPlayerZone.map_PlayerID_Resources", player.gUINT("mPlayerId"), "cResources");
+                    if (resources == null) continue;
                     fClass items = resources.gC("mResources_vector");
                     Debug.Print("mResources_vector: {0:x}", resources.gUINT("mResources_vector"));
                     itemEntries = new List<CItemEntry>();

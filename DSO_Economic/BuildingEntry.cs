@@ -73,6 +73,12 @@ namespace DSO_Economic
             this.cls = c;
             Name = cls.gSTR("mBuildingName_string");
         }
+        public long getBuffs()
+        {
+            fClass buffs = cls.gC("mBuffs_vector");
+            if (buffs == null) return 0;
+            return buffs.getClassList("cBuff").Count;
+        }
         public void load()
         {
             OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();

@@ -61,6 +61,7 @@
             this.tsmi_forum = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_wiki = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmi_source = new System.Windows.Forms.ToolStripMenuItem();
+            this.columnHeader8 = new System.Windows.Forms.ColumnHeader();
             this.tabCtrl.SuspendLayout();
             this.tabPage_Items.SuspendLayout();
             this.tabPage_Time.SuspendLayout();
@@ -248,7 +249,8 @@
             this.columnHeader4,
             this.columnHeader5,
             this.columnHeader6,
-            this.columnHeader7});
+            this.columnHeader7,
+            this.columnHeader8});
             this.lst_production.Location = new System.Drawing.Point(202, 3);
             this.lst_production.Name = "lst_production";
             this.lst_production.Size = new System.Drawing.Size(540, 562);
@@ -364,6 +366,10 @@
             this.tsmi_source.Text = "&Quellcode";
             this.tsmi_source.Click += new System.EventHandler(this.tsmi_source_Click);
             // 
+            // columnHeader8
+            // 
+            this.columnHeader8.Text = "Buffs";
+            // 
             // DSOEForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -424,6 +430,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmi_forum;
         private System.Windows.Forms.ToolStripMenuItem tsmi_wiki;
         private System.Windows.Forms.ToolStripMenuItem tsmi_source;
+        private System.Windows.Forms.ColumnHeader columnHeader8;
     }
 }
 

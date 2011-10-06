@@ -82,6 +82,8 @@ namespace DSO_Economic
         }
         private void DSOEForm_Load(object sender, EventArgs e)
         {
+            tabCtrl.TabPages.Remove(tabPage_Time);
+
             #region init
             Global.isLinux = System.Environment.OSVersion.Platform.Equals(System.PlatformID.Unix);
             status.Text = "";
@@ -210,7 +212,7 @@ namespace DSO_Economic
             else
             {
                 tabCtrl.TabPages.Remove(tabPage_Items);
-                tabCtrl.TabPages.Remove(tabPage_Time);
+//                tabCtrl.TabPages.Remove(tabPage_Time);
                 tabPage_Buildings.Select();
             }
             BuildingRefresh.Enabled = true;
@@ -366,7 +368,7 @@ namespace DSO_Economic
                             Debug.Print("{0}", DateTime.Now.Ticks / b.ePTime);
                             Debug.Print("{0}", DateTime.Now.Ticks / b.sPTime);
                             Debug.Print("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60);
-
+                            Debug.Print("{0}", b.getBuffs());
                             lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60));
                         }
                         else
@@ -376,6 +378,7 @@ namespace DSO_Economic
                             lve.SubItems.Add("ja");
                         else
                             lve.SubItems.Add("nein");
+                        lve.SubItems.Add(""+b.getBuffs());
                     }
             }
             catch (EndOfStreamException er)
