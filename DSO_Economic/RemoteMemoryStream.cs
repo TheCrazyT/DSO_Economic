@@ -8,17 +8,17 @@ namespace DSO_Economic
     class RemoteMemoryStream : MemoryStream
     {
         private IntPtr phandle;
-        private long pos = 0;
-        private uint cache_start;
-        private uint cache_end;
+        private Int64 pos = 0;
+        private Int64 cache_start;
+        private Int64 cache_end;
         private MemoryStream cache;
-        public void InitCache(uint start, uint end)
+        public void InitCache(Int64 start, Int64 end)
         {
             uint br=0;
             this.cache_start = start;
             this.cache_end = end;
             byte[] mem = new byte[end - start];
-            Global.ReadProcessMemory(phandle, start, mem, end - start, ref br);
+            Global.ReadProcessMemory(phandle, (IntPtr)start, mem, (uint)(end - start), ref br);
             this.cache = new MemoryStream(mem, 0, (int)br);
         }
         public void RemoveCache()
@@ -86,6 +86,22 @@ namespace DSO_Economic
                     break;
                 case SeekOrigin.Current:
                     this.pos += offset;
+                    break;
+                case SeekOrigin.End:
+                    throw new Exception("Not implemented");
+                    break;
+            }
+            return pos;
+        }
+        public long Seek(IntPtr offset, SeekOrigin loc)
+        {
+            switch (loc)
+            {
+                case SeekOrigin.Begin:
+                    this.pos = offset.ToInt64();
+                    break;
+                case SeekOrigin.Current:
+                    this.pos += offset.ToInt64();
                     break;
                 case SeekOrigin.End:
                     throw new Exception("Not implemented");

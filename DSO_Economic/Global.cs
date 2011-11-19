@@ -17,13 +17,14 @@ namespace DSO_Economic
     {
         public static bool isLinux;
         private static uint SwfClassToken;
+        public static Loading LDForm;
         public static bool connected
         {
             get
             {
                 uint br = 0;
                 uint[] mem = new uint[1];
-                if (!ReadProcessMemory(Main.Handle, MainClass, mem, 4, ref br)) return false;
+                if (!ReadProcessMemory(Main.Handle, (IntPtr)MainClass, mem, 4, ref br)) return false;
                 if ((mem[0] < (uint)npswf.BaseAddress) || (mem[0] > (uint)((uint)npswf.BaseAddress + npswf.ModuleMemorySize)))
                     return false;
                 /*if (!ReadProcessMemory(Main.Handle, MainClass + 0x5c, mem, 4, ref br)) return false;
@@ -37,7 +38,7 @@ namespace DSO_Economic
         public static Dictionary<String, uint> Buildings;
 
         public static MyProcessModule npswf = null;
-        public static uint MainClass = 0;
+        public static Int64 MainClass = 0;
         public const uint LIST_MODULES_ALL = 0x03;
         public static MyProcess Main = null;
         public static List<String> itemnames;
@@ -59,6 +60,10 @@ namespace DSO_Economic
             {
                 if (MessageBox.Show("Datei fla.dat existiert nicht und muss heruntergeladen werden!", "", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) == DialogResult.Cancel)
                 {
+                    Global.LDForm.Close();
+                    Global.LDForm.Dispose();
+                    //Application.Exit();
+                    
                     Environment.Exit(0);
                     return;
                 }
@@ -406,7 +411,7 @@ namespace DSO_Economic
                 return;
             }
         }*/
-        private static void findMainClass(IntPtr handle, RemoteMemoryStream rms, uint start, uint size)
+        private static void findMainClass(IntPtr handle, RemoteMemoryStream rms, Int64 start, Int64 size)
         {
             rms.InitCache(start, start + size);
             Application.DoEvents();
@@ -446,6 +451,7 @@ namespace DSO_Economic
                     if (player.gUINT("mPlayerId") == 0) continue;
                     if (player.gUINT("mPlayerLevel") > 50) continue;
                     if (player.gUINT("mPlayerLevel") == 0) continue;
+                    //Debug.Print("P level {0}", player.gUINT("mPlayerLevel"));
                     if (player.gUINT("mGeneralsAmount") > 25) continue;
                     v = player.gUINT("mCurrentBuildingsCountAll");
                     w = player.gUINT("mCurrentMaximumBuildingsCountAll");
@@ -521,7 +527,7 @@ namespace DSO_Economic
         public static bool connect()
         {
             uint MaxAddress = 0x7fffffff;
-            long address = 0;
+            Int64 address = 0;
             bool result;
 
             itemEntries = new List<CItemEntry>();
@@ -597,7 +603,7 @@ namespace DSO_Economic
                     Debug.Print("npswf found ...");
 
                     RemoteMemoryStream rms = new RemoteMemoryStream(p.Handle);
-                    uint size;
+                    Int64 size;
                     uint br = 0;
                     address = 0;
                     MEMORY_BASIC_INFORMATION m = new MEMORY_BASIC_INFORMATION();
@@ -607,20 +613,20 @@ namespace DSO_Economic
                         if (!result) break; //am ende angekommen ... wir können aufhören
 
                         Debug.Print("Searching in:{0:x} - {1:x} Size: {2:x}", (long)m.BaseAddress, (long)m.BaseAddress + (long)m.RegionSize, m.RegionSize);
-                        size = (uint)m.RegionSize;
+                        size = m.RegionSize.ToInt64();
                         if (size > Params.maxmemsize)
                         {
-                            address = (long)m.BaseAddress + (long)m.RegionSize;
+                            address = m.BaseAddress.ToInt64() + m.RegionSize.ToInt64();
                             continue;
                         }
                         if (size == 0)
                         {
-                            address = (long)m.BaseAddress + (long)m.RegionSize;
+                            address = m.BaseAddress.ToInt64() + m.RegionSize.ToInt64();
                             continue;
                         }
-                        rms.Seek((long)m.BaseAddress, SeekOrigin.Begin);
-                        
-                        findMainClass(p.Handle, rms, (uint)m.BaseAddress, (uint)m.RegionSize);
+                        rms.Seek(m.BaseAddress, SeekOrigin.Begin);
+
+                        findMainClass(p.Handle, rms, m.BaseAddress.ToInt64(), m.RegionSize.ToInt64());
                         if (buildingEntries!=null)
                         {
                             break;
@@ -628,7 +634,7 @@ namespace DSO_Economic
 
                         //if ((fClass.Count != 0) && (Main != null) && ((itemEntries.Count > 0) && (!Params.buildingsonly))) break;
 
-                        address = (long)m.BaseAddress + (long)m.RegionSize;
+                        address = m.BaseAddress.ToInt64() + m.RegionSize.ToInt64();
 
                     } while (address <= MaxAddress);
 

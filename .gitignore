@@ -6,5 +6,8 @@ bin
 *.user
 *.suo
 *.cache
+*.pdb
+*.pfx
 _*
 DSOEco.pfx
+*.manifest

@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DSO_Economic")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("-")]
+[assembly: AssemblyCompany("DSO_Economic")]
 [assembly: AssemblyProduct("DSO_Economic")]
 [assembly: AssemblyCopyright("Copyright © - 2011")]
 [assembly: AssemblyTrademark("")]

@@ -20,7 +20,9 @@ namespace DSO_Economic
 #else
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new DSOEForm());
+            DSOEForm mainForm = new DSOEForm();
+            mainForm.LoadEnv();
+            Application.Run(mainForm);
 #endif
         }
     }

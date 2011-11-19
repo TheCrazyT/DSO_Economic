@@ -80,7 +80,7 @@ namespace DSO_Economic
             myPane.Fill = new Fill(Color.White, Color.FromArgb(220, 220, 255), 45F);
             zgc.AxisChange();
         }
-        private void DSOEForm_Load(object sender, EventArgs e)
+        public void LoadEnv()
         {
             tabCtrl.TabPages.Remove(tabPage_Time);
 
@@ -160,11 +160,11 @@ namespace DSO_Economic
             }
             #endregion
 
-            Loading LDForm = new Loading();
-            LDForm.Cursor = Cursors.WaitCursor;
-            LDForm.Show();
+            Global.LDForm = new Loading();
+            Global.LDForm.Cursor = Cursors.WaitCursor;
+            Global.LDForm.Show();
             Global.init();
-            LDForm.Cursor = Cursors.WaitCursor;
+            Global.LDForm.Cursor = Cursors.WaitCursor;
 
             if (!Global.connect())
             {
@@ -212,15 +212,18 @@ namespace DSO_Economic
             else
             {
                 tabCtrl.TabPages.Remove(tabPage_Items);
-//                tabCtrl.TabPages.Remove(tabPage_Time);
+                //                tabCtrl.TabPages.Remove(tabPage_Time);
                 tabPage_Buildings.Select();
             }
             BuildingRefresh.Enabled = true;
             #endregion
 
             this.Visible = true;
-            LDForm.Hide();
-            LDForm.Dispose();
+            Global.LDForm.Hide();
+            Global.LDForm.Dispose();
+        }
+        private void DSOEForm_Load(object sender, EventArgs e)
+        {
         }
 
         private void ItemRefresh_Tick(object sender, EventArgs e)
