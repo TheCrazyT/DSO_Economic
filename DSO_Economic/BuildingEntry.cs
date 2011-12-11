@@ -34,7 +34,48 @@ namespace DSO_Economic
                     return false;
             }
         }
-        public double sPTime
+        public double wayTime1
+        {
+            get
+            {
+                if(cls.gUINT("mResourceCreation")==0)return 0;
+                if (cls.gUINT("mResourceCreation.path") == 0) return 0;
+                return ((double)cls.gUINT("mResourceCreation.path.pathLenX10000"))/2500.0;
+            }
+        }
+        public double wayTime2
+        {
+            get
+            {
+                if (cls.gUINT("mResourceCreation") == 0) return 0;
+                if (cls.gUINT("mResourceCreation.depositPath") == 0) return wayTime1;
+                return ((double)cls.gUINT("mResourceCreation.depositPath.pathLenX10000")) / 2500.0;
+            }
+        }
+        public double wayTime
+        {
+            get
+            {
+                double wt1 = wayTime1;
+                double wt2 = wayTime2;
+                if (wt1 == 0) return 0;
+                if (wt2 == 0) return 0;
+                return wt1 + wt2;
+            }
+        }
+        public double PTime
+        {
+            get
+            {
+                if (cls.gUINT("mResourceCreation") == 0) return 0;
+                if (cls.gUINT("mResourceCreation.resourceCreationDefinition") == 0) return 0;
+
+                return cls.gUINT("mResourceCreation.resourceCreationDefinition.workTime")*1;
+            }
+        }
+        public double sPTime { get{return -1;}}
+        public double ePTime { get{return -1;}}
+        /*public double sPTime
         {
             get
             {
@@ -53,7 +94,7 @@ namespace DSO_Economic
                 if ((result == -1) || (result == 0)) return _loadedePTime == 0 ? -1 : _loadedePTime;
                 return result;
             }
-        }
+        }*/
         public uint X
         {
             get
@@ -81,7 +122,7 @@ namespace DSO_Economic
         }
         public void load()
         {
-            OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();
+            /*OdbcCommand DbCommand = Global.DbConnection3.CreateCommand();
             DbCommand.CommandText = "SELECT sPTime,ePTime FROM BuildingProductionTimes WHERE X=? AND Y=?";
             DbCommand.Parameters.Add("X", OdbcType.Double).Value = X;
             DbCommand.Parameters.Add("Y", OdbcType.Double).Value = Y;
@@ -96,11 +137,11 @@ namespace DSO_Economic
                 this._loadedsPTime = -1;
                 this._loadedePTime = -1;
             }
-            odr.Close();
+            odr.Close();*/
         }
         public void save()
         {
-            try
+            /*try
             {
                 if ((ePTime == 0) || (sPTime == 0)) return;
                 if ((ePTime == -1) || (sPTime == -1)) return;
@@ -130,7 +171,7 @@ namespace DSO_Economic
             catch (EndOfStreamException e)
             {
                 Debug.Print("{0}", e);
-            }
+            }*/
         }
     }
 }

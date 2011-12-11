@@ -392,7 +392,12 @@ Longbow
                     return _level;
                 }
             }
-            public double sPTime
+            
+            //ToDo
+            public double sPTime { get { return -1; } }
+            public double ePTime { get { return -1; } }
+            
+            /*public double sPTime
             {
                 get
                 {
@@ -415,7 +420,7 @@ Longbow
                     }
                     return this._ePTime;
                 }
-            }
+            }*/
             public bool stop;
             public CBuildingEntryWrap()
             {

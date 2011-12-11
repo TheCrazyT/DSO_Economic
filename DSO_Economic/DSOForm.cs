@@ -360,7 +360,10 @@ namespace DSO_Economic
                         i++;
                         lst_production.Items.Add(lve);
                         if (b == null) continue;
-                        if ((b.ePTime != -1) && (b.sPTime != -1))
+
+                        if(b.PTime!=0)
+                            lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)((b.PTime+b.wayTime) / 60), (b.PTime+b.wayTime) % 60));
+                        /*if ((b.ePTime != -1) && (b.sPTime != -1))
                         {
                             double ticks = b.ePTime - b.sPTime;
                             Debug.Print(b.Name);
@@ -373,7 +376,7 @@ namespace DSO_Economic
                             Debug.Print("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60);
                             Debug.Print("{0}", b.getBuffs());
                             lve.SubItems.Add(String.Format("{0} Min {1} Sec", (long)(ticks / 1000 / 60), (ticks / 1000) % 60));
-                        }
+                        }*/
                         else
                             lve.SubItems.Add("");
                         lve.SubItems.Add(b.level.ToString());

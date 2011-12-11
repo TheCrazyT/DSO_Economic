@@ -78,6 +78,7 @@ namespace DSO_Economic
             }
 
             List<string> classes = new List<string>();
+            classes.Add("cGO");
             classes.Add("cPlayerData");
             classes.Add("cGeneralInterface");
             classes.Add("cPlayerZoneScreen");
@@ -86,8 +87,10 @@ namespace DSO_Economic
             classes.Add("cBuff");
             classes.Add("dResource");
             classes.Add("cResourceCreation");
+            classes.Add("dResourceCreationDefinition");
             classes.Add("cDeposit");
             classes.Add("cResources");
+            classes.Add("cPathObject");
             //classes.Add("gEconomics");
             FlashRead.ReadCompressed(new StreamReader(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)+"\\fla.dat").BaseStream, classes);
             if (fClass.Count == 0)
@@ -158,15 +161,16 @@ namespace DSO_Economic
         }
         static public string export_buildings()
         {
-            string s = "Name,PTime,Level,Active\r\n";
+            string s = "Name,PTime,Level,Active,Buff\r\n";
             foreach (CBuildingEntry b in buildingEntries)
             {
                 double ticks = 0;
                 try
                 {
-                    ticks = b.ePTime - b.sPTime;
+                    /*ticks = b.ePTime - b.sPTime;
                     if ((b.ePTime == -1) || (b.sPTime == -1))
-                        ticks = 0;
+                        ticks = 0;*/
+                    ticks = b.PTime * 1000;
                 }
                 catch (EndOfStreamException err)
                 {
@@ -176,7 +180,8 @@ namespace DSO_Economic
                     a = "1";
                 else
                     a = "0";
-                s += (b.Name + "," + Math.Round(ticks / 1000) + "," + b.level + "," + a + "\r\n");
+                
+                s += (b.Name + "," + Math.Round(ticks / 1000) + "," + b.level + "," + a +","+ b.getBuffs()+ "\r\n");
             }
             return s;
         }
@@ -479,7 +484,6 @@ namespace DSO_Economic
                     }
 
                     MainClass = start + i;
-                    Debug.Print("{0:x} {1:x}", player.gUINT("mGeneralInterface.mCurrentPlayerZone"), player.gUINT("mGeneralInterface.CHEAT_KEYS"));
 
                     fClass fdeposits = player.gC("mGeneralInterface.mCurrentPlayerZone.mStreetDataMap.mDeposits_vector");
                     Debug.Print("Deposits at?: {0:x}", fdeposits.getOffset());
@@ -501,6 +505,8 @@ namespace DSO_Economic
                     {
                         CBuildingEntry BE = new CBuildingEntry(b);
                         Debug.Print("{0} {1} {2}", BE.Name, BE.X, BE.Y);
+                        Debug.Print("{0}", BE.wayTime1);
+                        Debug.Print("{0}", BE.wayTime2);
                         if (!Buildings.ContainsKey(BE.Name))
                             Buildings.Add(BE.Name, 1);
                         else
